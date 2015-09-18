@@ -14,3 +14,9 @@
   * ``library()`` makes it available for your current session / script. Will automatically **load** dependencies, but I don't think it will automatically **install** them. Needs to be done every session. Should not use quotes.
 * Rtools is needed for building packages in Windows.
   * Also want to ``install.packages("devtools")`` after downloading
+
+
+## Scott Wisdom ##
+* Ariella pointed out that identically-named functions from one library will "overwrite" each other (most recent load wins).
+  * R calls this "masking" and you can identify such situations with ``conflicts()``
+  
