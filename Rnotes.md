@@ -17,6 +17,6 @@
 
 
 ## Scott Wisdom ##
-* Ariella pointed out that identically-named functions from one library will "overwrite" each other (most recent load wins).
+* Ariella pointed out that identically-named functions from one library will "overwrite" each other (most recently load wins).
   * R calls this "masking" and you can identify such situations with ``conflicts()``
   
