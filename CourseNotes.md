@@ -34,11 +34,11 @@
 
 | Metric | Probability |
 | --- | --- |
-| Sensitivity | Pr( PositiveTest | Disease ) |
-| Specificity | Pr( NegativeTest | !Disease ) |
-| Positive Predictive Value | Pr( Disease | PositiveTest ) |
-| Negative Predictive Value | Pr( !Disease | NegativeTest ) |
-| Accuracy | Pr( CorrectTest ) |
+| Sensitivity | ``Pr( PositiveTest | Disease )`` |
+| Specificity | ``Pr( NegativeTest | NotDisease )`` |
+| Positive Predictive Value | ``Pr( Disease | PositiveTest )`` |
+| Negative Predictive Value | ``Pr( NotDisease | NegativeTest )`` |
+| Accuracy | ``Pr( CorrectTest )`` |
   
 [dukesuit]: http://news.sciencemag.org/2011/09/flawed-cancer-trial-duke-sparks-lawsuit
 [potti]: https://en.wikipedia.org/wiki/Anil_Potti
