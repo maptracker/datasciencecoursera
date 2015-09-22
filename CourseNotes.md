@@ -32,6 +32,7 @@
   * Relative size of effect is important. We may be able to infer without being able to predict due to overlap of the populations. Prediction requires decent separation of the the two populations.
 * Data Dredging (multiple testing)
 
+| Metric | Probability |
 | --- | --- |
 | Sensitivity | Pr( PositiveTest | Disease ) |
 | Specificity | Pr( NegativeTest | !Disease ) |
