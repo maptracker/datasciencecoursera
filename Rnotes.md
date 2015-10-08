@@ -4,7 +4,20 @@
   right-hand argument. In the above example, x and y will be "the
   same", but will be two independent objects (manipulating x will not
   change y, even if y is a data frame or other 'complex' object).
-
+* R is case-sensitive: b != B
+* Left methods and right methods may have the same name, but are
+  generally (always?) different functions.
+  * Example: ``dim()``
+    * On the right(eg ``myDims <- dim(myMatrix)``), will **get**
+      the dimensionality of the query
+    * On the left (eg ``dim(myMatrix) <- c(2, 3)``) will **set** dimensions
+    * These are **two different functions** in R
+      * The right function is named "as is", that is just "dim"
+      * The "real" name of the left function is ``dim<-`` (that is,
+        with the "<-" arrow tacked on), which R calls a "replacement
+        method". Scott calls this "dim gets"
+      * ``?dim`` will show you help for *both* methods
+* Methods can be 
 ### Objects ###
 * [Hadley Wickham : Data structures][WickhamDataStructures] - nice
   overview shared by Scott.
@@ -24,14 +37,13 @@
     * eg ``as.integer()``
 * All objects appear to have a default value that is used when an
   object is needed but has not been explicitly provided.
-
 * Atomic classes
   * Character
     * default value ``""`` (empty string)
     * ``is.character()`` / ``as.character()``
   * Numeric
-    * The alias "double" apparently can be interchanged anywhere
-      "numeric" is used.
+    * The aliases "double" and "real" can be interchanged anywhere
+      "numeric" is used. ``typeof(1.3)`` will return "double".
     * default value ``0``
     * ``is.numeric()`` / ``as.numeric()``
     * Double-precision reals
@@ -42,7 +54,8 @@
     * With some effort can [increase magnitude of floats][BigNumbersInR]:
       * ``library(gmp)`` = "Arithmetic Without Limits"
       * ``library(Brobdingnag)`` = represent numbers in log form
-    * ``options(digits=16)`` = set the number of digits R displays [StackOverflow](https://stackoverflow.com/questions/17724382/display-exact-value-of-a-variable-in-r)
+    * ``options(digits=16)`` = set the number of digits R displays
+      ([StackOverflow][SObignumbers])
   * Integer
     * default value ``0``
     * ``is.integer()`` / ``as.integer()``
@@ -50,11 +63,15 @@
       numeric, eg ``172L``
   * Complex
     * default value ``0+0i``
+    * ``is.complex()`` / ``as.complex()``
   * Logical (Boolean)
     * default value ``FALSE``
 * Special values
   * ``NA`` = "Not Available"
     * ``is.na()`` = boolean check
+    * Apparently returned for "not possible", eg ``as.integer("pineapple")``
+    * Is the default value for some objects, such as matrices without
+      any values.
     * ``NaN`` = Not a Number
       * ``is.nan()``
       * More specific form of NA
@@ -62,9 +79,9 @@
   * ``NULL`` = undefined
     * ``is.null()``
       * Throws an error with no argument. Seems like that should be "TRUE"
-    * Weird behavior. Throws an error with is.na(), but spits out a
-      bizzare value of ``logical(0)`` with is.nan(). May be a sign of
-      a latent malignant AI - must watch carefully.
+    * Weird behavior. Throws an error when passed to is.na(), but
+      spits out a bizzare value of ``logical(0)`` with is.nan(). May
+      be a sign of a latent malignant AI - must watch carefully.
     * Asking Scott about NULL seems to make him uncomfortable, like
       telling a parent that their child is eating paste.
 * Vector
@@ -87,6 +104,87 @@
     * ``1:20`` = 1, 2, 3 ... 19, 20
   * List
     * Represented as a vector, but can be heterogeneous
+* Matrix
+  * Two dimensional array
+  * default components ``NA``
+  * ``is.matrix()`` / ``as.matrix()``
+    * as.matrix will make a single column array
+    * ``is.array()`` will evaluate TRUE
+  * ``matrix( nrow = 2, ncol = 3 )`` = empty
+    * Attribute ``dimnames`` can be used to name the rows an columns
+  * ``matrix(1:6, nrow = 2, ncol = 3 )`` = populated with the sequence
+    * Construction is "column-wise", meaning the matrix columns are
+      filled first into column 1, then column 2, etc
+    * While maintaining dimensionality, the contents of the matrix are
+      effectively a linear vector wrapped into those dimensions.
+      * However, ``is.vector`` will evaluate FALSE.
+  * ``dim()`` = return dimensions of matrix
+    * ``dim`` can also be **assigned**:
+      * ``dim(myMatrix) <- c(2,5)``
+    * Doing so will "linearize the contents of the matrix, and then
+      re-construct them (column-by-column) into the specified dimensions.
+  * ``cbind( col1, col2, ... )`` / ``rbind( row1, row2, ...)`` = pass
+    explicit vectors that you wish to write into columns or rows of a new matrix
+    * **CAUTION:** If your provided vectors are not the same length, R
+      will "pad" them out by *repeating the input vector* until the full
+      dimensionality is filled
+        * ``rbind(1:2,5:10)`` will yield a first row that is
+          ``1,2,1,2,1,2`` so that it is the same length as
+          ``5,6,7,8,9,10`` in the second row.
+        * If R can not fully reuse every repetition of an input vector
+          it will warn you ``number of columns of result is not a
+          multiple of vector length`` (but will still happily shovel
+          repeating values into the matrix). You will get *no warning
+          at all* if it is able to "cleanly" repeat all the input
+          vectors.
+* Array
+* Factor
+  * Factors are "labeled integer vectors"
+  * Useful for categorical data, like "Male" / "Female" or "10 ug" /
+    "20 ug" / "50 ug"
+  * Functionally will be utilized as vectors, but the labels provide
+    human interpretation (so you don't forget what 4 represents).
+  * Used in modeling methods like ``lm()`` and ``glm()``
+  * ``x <- factor(c("peach", "pear", "marmoset", "peach", "peach"))``
+    * ``typeof(x)`` = ``"integer"``
+    * ``str(x)`` = ``Factor w/ 3 levels "marmoset","peach",..: 2 3 1 2 2``
+      * Note that internally while your order is maintained the
+        integer assignment is made independently by R; peach is 2,
+        even though it was "first".
+    * ``levels(x)`` = reports the factor names as ordered by integer value
+    * If you want to set the factor order explicitly, the ``levels``
+      argument can be used:
+      * ``x <- factor(c("peach", "pear", "marmoset", "peach", "peach"), levels = c("peach", "pear", "marmoset"))``
+    * The order of levels is important in some modeling because the
+      first level is taken as baseline.
+  * ``table()`` = simple contigency table of the factor
+* Data Frame
+  * Special form of list
+    * Each element is effectively a column
+    * Like a matrix, is rectangular: All columns must have same length
+      (same number of rows)
+    * Like a list, but unlike a matrix, a data frame can be
+      heterogeneous; Each column can be a different data type
+  * Every row is named (attribute ``row.names``)
+  * ``data.matrix()`` = convert to matrix
+  * Creation
+    * ``read.table()`` = flexible file import, lots of parameters
+    * ``read.csv()`` = alias for read.table, but with different
+      defaults for CSV files. Use ``read.csv2()`` for CSV formats from
+      countries where ',' is used as a decimal point.
+    * ``data.frame( col1, col2, ... )`` = direct generation
+* Names
+  * Most R objects can have names
+    * If you try to name something that is un-name-able, you'll get
+      ``target of assignment expands to non-language object``
+  * ``names(someObject) <- c("First name", "another name", "name 3")``
+    * If you supply insufficient names, ``NA`` is assigned to the
+      remaining parts of the object
+    * Assigning too many names yields ``'names' attribute [#] must be
+      the same length as the vector [#]``, and the assignment fails
+      (nothing changes).
+  * ``dimnames(myMatrix) <- list(c("alpha", "beta"), c("hot", "cold"))``
+    * Assigns row and column names, respectively, to a matrix
 * Attributes
   * reported via ``attributes()``
   * names & dimnames
@@ -122,6 +220,9 @@
 
 # Random
 
+* ``R.Version()`` = show the software version information for current
+  R session
+
 ## Serialization ##
 * ``match.call()``
   * Returns a 'language' object
@@ -131,6 +232,7 @@
   ``eval( parse( text = "some R code" ) )`` is the same as eval("some
   R code") in many other languages.
 
+Parse example:
     > myExp <- parse(text = "z <- 3")
     > myExp
     expression(z <- 3)
@@ -163,3 +265,4 @@
 
 [WickhamDataStructures]: http://adv-r.had.co.nz/Data-structures.html
 [BigNumbersInR]: https://stackoverflow.com/questions/2053397/long-bigint-decimal-equivalent-datatype-in-r
+[SObignumbers]: https://stackoverflow.com/questions/17724382/display-exact-value-of-a-variable-in-r
