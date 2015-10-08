@@ -17,7 +17,8 @@
         with the "<-" arrow tacked on), which R calls a "replacement
         method". Scott calls this "dim gets"
       * ``?dim`` will show you help for *both* methods
-* Methods can be 
+* Methods can be
+
 ### Objects ###
 * [Hadley Wickham : Data structures][WickhamDataStructures] - nice
   overview shared by Scott.
@@ -231,15 +232,14 @@
   will then execute the code represented by the initial text. So
   ``eval( parse( text = "some R code" ) )`` is the same as eval("some
   R code") in many other languages.
-
-Parse example:
-    > myExp <- parse(text = "z <- 3")
-    > myExp
-    expression(z <- 3)
-    > eval(myExp)
-    > z
-    [1] 3
-
+```R
+> myExp <- parse(text = "z <- 3")
+> myExp
+expression(z <- 3)
+> eval(myExp)
+> z
+[1] 3
+```
 
 ## Scott Wisdom ##
 * Ariella pointed out that identically-named functions from one
