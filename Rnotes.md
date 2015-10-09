@@ -138,8 +138,8 @@
     * Single brackets are needed for accessing multiple elements from a list
   * `[[` = Access a specific element
     * Only one element at a time!
-  * `$` = Access by name
-    * Simple example with list: ```R
+  * `$` = Access by name. Simple example with list:
+    * ```R
     myList <- list( dog = c(17,32,1), cat = c(7,5,2) )
     myList$dog      # A numeric vector representing the 'dog' column
     myList[[1]]     # Same as above, a vector from the dog column
