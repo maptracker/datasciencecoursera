@@ -1,4 +1,5 @@
 * Hello
+* `$` = Access by name. Simple example with list:
   * ```R
     myList <- list( dog = c(17,32,1), cat = c(7,5,2) )
     myList$dog    # A numeric vector representing the 'dog' column
