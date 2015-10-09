@@ -12,7 +12,7 @@
   v[b] # Will perform the same selection as two lines up
   ```
   * Single brackets are needed for accessing multiple elements from a list
-* ``[[`` = Access a specific element
+* `[[` = Access a specific element
   * Only one element at a time!
 * `$` = Access by name. Simple example with list:
   ```R
