@@ -1,7 +1,7 @@
 
 #### <a name='subsetting'></a>Subsetting ####
 
-* Selecting part of a list:
+* Selecting part of a list
   
   ```R
   v <- c(12,6,7,22,19,5)
@@ -17,6 +17,7 @@
 * `[[` = Access a specific element
   * Only one element at a time!
 * `$` = Access by name. Simple example with list:
+
   ```R
   myList <- list( dog = c(17,32,1), cat = c(7,5,2) )
   myList$dog      # A numeric vector representing the 'dog' column
@@ -31,9 +32,11 @@
   myList[[1]][[2]] # Get single element in first row, second column
   myList[[c(1,2)]] # Same as above
   ```
+  
 * Matrix subsets that are 1 dimensional by default will return
   vectors. If you want such results to remain as matrices, use `drop
   = FALSE`. Examples:
+  
   ```R
   x <- matrix( 11:22, nrow = 3, dimnames = list
     ( c("Alice","Bob","Chris"),
