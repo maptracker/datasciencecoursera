@@ -17,7 +17,6 @@
         with the "<-" arrow tacked on), which R calls a "replacement
         method". Scott calls this "dim gets"
       * `?dim` will show you help for *both* methods
-* Methods can be
 
 ### Objects ###
 * [Hadley Wickham : Data structures][WickhamDataStructures] - nice
@@ -87,8 +86,12 @@
       telling a parent that their child is eating paste.
 * Vector
   * Most basic object
-    * Scott says everything in R is a vector - it does not have the
-      concept of scalars.
+    * Scott says instead of scalars R uses vectors-of-lenght-one. That
+      is, if you need to represent a single number, it's not a scalar
+      object, but rather a vector with one entry. Presumably that's
+      why when you evaluate just `4.3` R will reply `[1] 4.3`; the
+      "[1]" is a reminder that R views this as a vector with one
+      element, which is the double 4.3.
   * Must contain homogenous (same class) entries
   * Creation
     * `vector()`
@@ -102,9 +105,19 @@
         * `str(x)` &rarr; `chr [1:5] "1" "2" "3" "5" "7"` (all characters!)
   * Sequences
     * Iterative vectors, defined easily with ":"
-    * `1:20` = 1, 2, 3 ... 19, 20
-  * List
-    * Represented as a vector, but can be heterogeneous
+    * Shorthand `1:20` = 1, 2, 3 ... 19, 20
+    * Scott says to use `seq()` as a safer version:
+      * `1:length(x)`: If x is zero length, you probably wanted an
+        empty vector, but instead you'll get a vector of length 2: `c(1,0)`
+      * `seq(from = 1, to = length(x), length = length(x))` will
+        provide what you need (`integer(0)`, an integer vector with no
+        members).
+* List
+  * Represented as a vector, but can be heterogeneous
+  * Lists can be turned into arrays by assigning `dim()`. Scott says
+    this is generally useless, but occassionaly very useful;
+    Conversion to an array lets members be accessed by row and column
+    indices/names.
 * Matrix
   * Two dimensional array
   * default components `NA`
@@ -159,6 +172,10 @@
     * The order of levels is important in some modeling because the
       first level is taken as baseline.
   * `table()` = simple contigency table of the factor
+    * By default missing values will be excluded in the counts! set
+      `exclude = NULL` to count them as well. Scott says some
+      statistic shops have altered the table function to have this as
+      the default.
 * Data Frame
   * Special form of list
     * Each element is effectively a column
@@ -192,6 +209,7 @@
   * user-defined
 
 # Data Import #
+* [CRAN guide to Data Import/Export][CranImportExport]
 * `read.table()` = flexible file import, lots of parameters:
   * `file` = path to file, or a connection
   * `header` = flag indicating a header row is present
@@ -223,6 +241,8 @@
   * Inverse of `dput`
 * `unserialize()` = reconsitute an R object via a "connection"
   * Inverse of `serialize`
+* `scan()` = less convienent that read.table, but **much** faster; Useful
+  for very large files.
 * *I remain a tad confused over the diversity of import / export methods*
 
 # Data Export #
@@ -294,6 +314,13 @@ expression(z <- 3)
   library will "overwrite" each other (most recently load wins).
   * R calls this "masking" and you can identify such situations with
     `conflicts()`
+  * Scott notes that the functions are not "overwritten"; All
+    same-named functions still exist within the R session, and can all
+    be accessed as long as you specify the package you want a particular from:
+    * `somePackage::someFunction( color = "lizzard" )` = access
+      someFunction() contained in the package somePackage.
+    * `get("someFunction", pos = "somePackage")( color = "lizzard" )`
+      = same as above, different syntax using the `get` function.
   
 
 ## Course Notes ##
@@ -314,3 +341,4 @@ expression(z <- 3)
 [WickhamDataStructures]: http://adv-r.had.co.nz/Data-structures.html
 [BigNumbersInR]: https://stackoverflow.com/questions/2053397/long-bigint-decimal-equivalent-datatype-in-r
 [SObignumbers]: https://stackoverflow.com/questions/17724382/display-exact-value-of-a-variable-in-r
+[CranImportExport]: https://cran.r-project.org/doc/manuals/R-data.html
