@@ -1,7 +1,7 @@
 
 #### <a name='subsetting'></a>Subsetting ####
 
-* Selecting part of a list
+* Selecting part of a list:
   ```R
   v <- c(12,6,7,22,19,5)
   v[3] # Get the third element
@@ -11,7 +11,7 @@
   b <- v < 15 # b is a logical vector same length as v, reporting entries < 15
   v[b] # Will perform the same selection as two lines up
   ```
-* Single brackets are needed for accessing multiple elements from a list
+  * Single brackets are needed for accessing multiple elements from a list
 * `[[` = Access a specific element
   * Only one element at a time!
 * `$` = Access by name. Simple example with list:
