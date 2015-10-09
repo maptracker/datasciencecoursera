@@ -123,7 +123,9 @@
 ## Vectors, Matrices and Data Frames ##
 
 * "Lists of stuff"
+
 #### <a name='subsetting'></a>Subsetting ####
+
 * Selecting part of a list
 * `[` = returns an object of the same class, can select multiple elements. Simple example with a vector:
   * ```R
