@@ -86,7 +86,7 @@
       telling a parent that their child is eating paste.
 * Vector
   * Most basic object
-    * Scott says instead of scalars R uses vectors-of-lenght-one. That
+    * Scott says instead of scalars R uses vectors-of-length-one. That
       is, if you need to represent a single number, it's not a scalar
       object, but rather a vector with one entry. Presumably that's
       why when you evaluate just `4.3` R will reply `[1] 4.3`; the
@@ -208,7 +208,7 @@
   * length
   * user-defined
 
-# Data Import #
+# <a name="import"></a>Data Import #
 * [CRAN guide to Data Import/Export][CranImportExport]
 * `read.table()` = flexible file import, lots of parameters:
   * `file` = path to file, or a connection
@@ -308,6 +308,7 @@ expression(z <- 3)
 > z
 [1] 3
 ```
+* See also the [Data Import](#import) section above.
 
 ## Scott Wisdom ##
 * Ariella pointed out that identically-named functions from one
