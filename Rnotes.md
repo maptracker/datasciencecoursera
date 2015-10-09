@@ -127,14 +127,14 @@
   * Selecting part of a list
   * `[` = returns an object of the same class, can select multiple elements
     * Simple example with a vector: ```R
-v <- c(12,6,7,22,19,5)
-v[3] # Get the third element
-v[c(3,5)] # Get third and fifth element
-v[2:4] # Elements 2,3,4
-v[v < 15] # All elements less than 15
-b <- v < 15 # b is a boolean vector of same length as v, reporting entries < 15
-v[b] # Will perform the same selection as two lines up
-```
+      v <- c(12,6,7,22,19,5)
+      v[3] # Get the third element
+      v[c(3,5)] # Get third and fifth element
+      v[2:4] # Elements 2,3,4
+      v[v < 15] # All elements less than 15
+      b <- v < 15 # b is a boolean vector of same length as v, reporting entries < 15
+      v[b] # Will perform the same selection as two lines up
+      ```
     * Single brackets are needed for accessing multiple elements from a list
   * `[[` = Access a specific element
     * Only one element at a time!
