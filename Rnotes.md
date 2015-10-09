@@ -127,7 +127,7 @@
 #### <a name='subsetting'></a>Subsetting ####
 
 * Selecting part of a list
-* ``[`` = returns an object of the same class, can select multiple elements. Simple example with a vector:
+* `\[` = returns an object of the same class, can select multiple elements. Simple example with a vector:
   ```R
   v <- c(12,6,7,22,19,5)
   v[3] # Get the third element
