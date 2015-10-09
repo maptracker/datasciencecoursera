@@ -26,8 +26,18 @@
     * Provides a verbose report of what the object is and what
       value(s) it contains.
     * Includes a dozen parameters controlling output
-  * `typeof()` = "storage mode" (class)
+  * `typeof()` = "storage mode" (basic class)
     * For a vector, reports the mode of the contents (ie not "vector")
+  * `class()` = like typeof, but reports object classes (ie, inherited
+    classes in an Objected Oriented paradigm).
+    * class can also be a left-had argument used to *set* the class of
+      an object. This can be used to assign a class
+      * The R documents disadvise doing this, and recommend `as()`
+        to coerce a class instead.
+      * `inherits()` tests if a particular object belongs to a particular class
+        * `inherits(x, what = 'vector')`
+    * `data.class()` = seems similar-but-different to class. It
+      [behaves weirdly](#dataclassweird).
   * `summary()` = brief overview of object
     * Reports "NA" content
   * `is.SOMETHING()` = class / type test method
@@ -35,8 +45,11 @@
     * Returns a boolean indicating if the object "is" that thing
   * `as.SOMETHING()` = coerce / cast an object from one mode to another
     * eg `as.integer()`
-* All objects appear to have a default value that is used when an
-  object is needed but has not been explicitly provided.
+* Objects have an initial value that is used when an object is needed
+  but has not been explicitly provided. For example, if you create a
+  structure that is specified as having integers, but you don't
+  provide the actual values, then the default value is used until such
+  time as you provide your own.
 * Atomic classes
   * Character
     * default value `""` (empty string)
@@ -186,7 +199,7 @@
   * Every row is named (attribute `row.names`)
   * `data.matrix()` = convert to matrix
   * Creation
-    * `read.table()` (see below)
+    * `read.table()` [see below](#import)
     * `data.frame( col1, col2, ... )` = direct generation
 * Names
   * Most R objects can have names
@@ -260,7 +273,8 @@
   * Inverse of `dget`
   * Not as complete as `save`; will not export object name
   * Tries to maintain human readability
-* `serialize` = 
+* `serialize` =
+* Also see the [Serialization](#serialization) section below
 
 # Packages #
 * `a <- available.packages()` = puts list of all packages in `a`
@@ -292,7 +306,7 @@
 * `R.Version()` = show the software version information for current
   R session
 
-## Serialization ##
+## <a name='serialization'></a>Serialization ##
 * `match.call()`
   * Returns a 'language' object
 * `parse()` can be used to process a character string to an R
@@ -323,6 +337,21 @@ expression(z <- 3)
     * `get("someFunction", pos = "somePackage")( color = "lizzard" )`
       = same as above, different syntax using the `get` function.
   
+## Weird Things ##
+
+#### <a name='dataclassweird'></a>data.class() vs class() ####
+
+```R
+> x <- vector('integer', length = 10)
+> inherits(x, what = 'integer')
+[1] TRUE
+> inherits(x, what = 'numeric')
+[1] FALSE
+> data.class(x)
+[1] "numeric"
+> class(x)
+[1] "integer"
+```
 
 ## Course Notes ##
 * R derived from S, now termed "S-PLUS" and owned by TIBCO
