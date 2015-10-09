@@ -18,67 +18,87 @@
         method". Scott calls this "dim gets"
       * `?dim` will show you help for *both* methods
 
-### Objects ###
+# Objects #
+
 * [Hadley Wickham : Data structures][WickhamDataStructures] - nice
   overview shared by Scott.
-* Object utility methods
-  * `str()` = "Structure"
-    * Provides a verbose report of what the object is and what
-      value(s) it contains.
-    * Includes a dozen parameters controlling output
-  * `typeof()` = "storage mode" (basic class)
-    * For a vector, reports the mode of the contents (ie not "vector")
-  * `class()` = like typeof, but reports object classes (ie, inherited
-    classes in an Objected Oriented paradigm).
-    * class can also be a left-had argument used to *set* the class of
-      an object. This can be used to assign a class
-      * The R documents disadvise doing this, and recommend `as()`
-        to coerce a class instead.
-      * `inherits()` tests if a particular object belongs to a particular class
-        * `inherits(x, what = 'vector')`
-    * `data.class()` = seems similar-but-different to class. It
-      [behaves weirdly](#dataclassweird).
-  * `summary()` = brief overview of object
-    * Reports "NA" content
-  * `is.SOMETHING()` = class / type test method
-    * eg `is.numeric()`
-    * Returns a boolean indicating if the object "is" that thing
-  * `as.SOMETHING()` = coerce / cast an object from one mode to another
-    * eg `as.integer()`
 * Objects have an initial value that is used when an object is needed
   but has not been explicitly provided. For example, if you create a
   structure that is specified as having integers, but you don't
   provide the actual values, then the default value is used until such
   time as you provide your own.
-* Atomic classes
-  * Character
-    * default value `""` (empty string)
-    * `is.character()` / `as.character()`
-  * Numeric
-    * The aliases "double" and "real" can be interchanged anywhere
-      "numeric" is used. `typeof(1.3)` will return "double".
-    * default value `0`
-    * `is.numeric()` / `as.numeric()`
-    * Double-precision reals
-    * `Inf` = infinity, `-Inf` = negative infinity
-      * `is.finite()` / `is.infinite()`
-      * R defines `1 / 0` as Inf - why isn't that UNDEF, since it's
-        either Inf or -Inf ??
-    * With some effort can [increase magnitude of floats][BigNumbersInR]:
-      * `library(gmp)` = "Arithmetic Without Limits"
-      * `library(Brobdingnag)` = represent numbers in log form
-    * `options(digits=16)` = set the number of digits R displays
-      ([StackOverflow][SObignumbers])
-  * Integer
-    * default value `0`
-    * `is.integer()` / `as.integer()`
-    * If defining explicitly, suffix with `L` to avoid being cast as
-      numeric, eg `172L`
-  * Complex
-    * default value `0+0i`
-    * `is.complex()` / `as.complex()`
-  * Logical (Boolean)
-    * default value `FALSE`
+* Names
+  * Most R objects can have names
+    * If you try to name something that is un-name-able, you'll get
+      `target of assignment expands to non-language object`
+  * `names(someObject) <- c("First name", "another name", "name 3")`
+    * If you supply insufficient names, `NA` is assigned to the
+      remaining parts of the object
+    * Assigning too many names yields `'names' attribute [#] must be
+      the same length as the vector [#]`, and the assignment fails
+      (nothing changes).
+  * `dimnames(myMatrix) <- list(c("alpha", "beta"), c("hot", "cold"))`
+    * Assigns row and column names, respectively, to a matrix
+* Attributes
+  * `attributes()` can get and set values
+  * names & dimnames, dimensions (matrices, arrays), class, length, etc
+  * user-defined
+
+#### Object utility methods ####
+* `str()` = "Structure"
+  * Provides a verbose report of what the object is and what
+    value(s) it contains.
+  * Includes a dozen parameters controlling output
+* `typeof()` = "storage mode" (basic class)
+  * For a vector, reports the mode of the contents (ie not "vector")
+* `class()` = like typeof, but reports object classes (ie, inherited
+  classes in an Objected Oriented paradigm).
+  * class can also be a left-had argument used to *set* the class of
+    an object. This can be used to assign a class
+    * The R documents disadvise doing this, and recommend `as()`
+      to coerce a class instead.
+    * `inherits()` tests if a particular object belongs to a particular class
+      * `inherits(x, what = 'vector')`
+  * `data.class()` = seems similar-but-different to class. It
+    [behaves weirdly](#dataclassweird).
+* `summary()` = brief overview of object
+  * Reports "NA" content
+* `is.SOMETHING()` = class / type test method
+  * eg `is.numeric()`
+  * Returns a boolean indicating if the object "is" that thing
+* `as.SOMETHING()` = coerce / cast an object from one mode to another
+  * eg `as.integer()`
+
+#### Atomic Classes ####
+
+* Character
+  * default value `""` (empty string)
+  * `is.character()` / `as.character()`
+* Numeric
+  * The aliases "double" and "real" can be interchanged anywhere
+    "numeric" is used. `typeof(1.3)` will return "double".
+  * default value `0`
+  * `is.numeric()` / `as.numeric()`
+  * Double-precision reals
+  * `Inf` = infinity, `-Inf` = negative infinity
+    * `is.finite()` / `is.infinite()`
+    * R defines `1 / 0` as Inf - why isn't that UNDEF, since it's
+      either Inf or -Inf ??
+  * With some effort can [increase magnitude of floats][BigNumbersInR]:
+    * `library(gmp)` = "Arithmetic Without Limits"
+    * `library(Brobdingnag)` = represent numbers in log form
+  * `options(digits=16)` = set the number of digits R displays
+    ([StackOverflow][SObignumbers])
+* Integer
+  * default value `0`
+  * `is.integer()` / `as.integer()`
+  * If defining explicitly, suffix with `L` to avoid being cast as
+    numeric, eg `172L`
+* Complex
+  * default value `0+0i`
+  * `is.complex()` / `as.complex()`
+* Logical (Boolean)
+  * default value `FALSE`
 * Special values
   * `NA` = "Not Available"
     * `is.na()` = boolean check
@@ -97,142 +117,170 @@
       be a sign of a latent malignant AI - must watch carefully.
     * Asking Scott about NULL seems to make him uncomfortable, like
       telling a parent that their child is eating paste.
-* Vector
-  * Most basic object
-    * Scott says instead of scalars R uses vectors-of-length-one. That
-      is, if you need to represent a single number, it's not a scalar
-      object, but rather a vector with one entry. Presumably that's
-      why when you evaluate just `4.3` R will reply `[1] 4.3`; the
-      "[1]" is a reminder that R views this as a vector with one
-      element, which is the double 4.3.
-  * Must contain homogenous (same class) entries
-  * Creation
-    * `vector()`
-      * `x <- vector("numeric", length = 10)`
-      * Initialized with default values.
-    * `c()` = "concatenate"
-      * `x <- c( 1L, 2L, 3L )`
-      * **CAUTION:** c() will type-cast your input to force it into
-        homogeneity, if required. For example:
-      * `x <- c( 1L, 2L, 3L, 5, "7" )` (integer, numeric, character)
-        * `str(x)` &rarr; `chr [1:5] "1" "2" "3" "5" "7"` (all characters!)
-  * Sequences
-    * Iterative vectors, defined easily with ":"
-    * Shorthand `1:20` = 1, 2, 3 ... 19, 20
-    * Scott says to use `seq()` as a safer version:
-      * `1:length(x)`: If x is zero length, you probably wanted an
-        empty vector, but instead you'll get a vector of length 2: `c(1,0)`
-      * `seq(from = 1, to = length(x), length = length(x))` will
-        provide what you need (`integer(0)`, an integer vector with no
-        members).
-* List
-  * Represented as a vector, but can be heterogeneous
-  * Lists can be turned into arrays by assigning `dim()`. Scott says
-    this is generally useless, but occassionaly very useful;
-    Conversion to an array lets members be accessed by row and column
-    indices/names.
-* Matrix
-  * Two dimensional array
-  * default components `NA`
-  * `is.matrix()` / `as.matrix()`
-    * as.matrix will make a single column array
-    * `is.array()` will evaluate TRUE
-  * `matrix( nrow = 2, ncol = 3 )` = empty
-    * Attribute `dimnames` can be used to name the rows an columns
-  * `matrix(1:6, nrow = 2, ncol = 3 )` = populated with the sequence
-    * Construction is "column-wise", meaning the matrix columns are
-      filled first into column 1, then column 2, etc
-    * While maintaining dimensionality, the contents of the matrix are
-      effectively a linear vector wrapped into those dimensions.
-      * However, `is.vector` will evaluate FALSE.
-  * `dim()` = return dimensions of matrix
-    * `dim` can also be **assigned**:
-      * `dim(myMatrix) <- c(2,5)`
-    * Doing so will "linearize the contents of the matrix, and then
-      re-construct them (column-by-column) into the specified dimensions.
-  * `cbind( col1, col2, ... )` / `rbind( row1, row2, ...)` = pass
-    explicit vectors that you wish to write into columns or rows of a new matrix
-    * **CAUTION:** If your provided vectors are not the same length, R
-      will "pad" them out by *repeating the input vector* until the full
-      dimensionality is filled
-        * `rbind(1:2,5:10)` will yield a first row that is
-          `1,2,1,2,1,2` so that it is the same length as
-          `5,6,7,8,9,10` in the second row.
-        * If R can not fully reuse every repetition of an input vector
-          it will warn you `number of columns of result is not a
-          multiple of vector length` (but will still happily shovel
-          repeating values into the matrix). You will get *no warning
-          at all* if it is able to "cleanly" repeat all the input
-          vectors.
-* Array
-* Factor
-  * Factors are "labeled integer vectors"
-  * Useful for categorical data, like "Male" / "Female" or "10 ug" /
-    "20 ug" / "50 ug"
-  * Functionally will be utilized as vectors, but the labels provide
-    human interpretation (so you don't forget what 4 represents).
-  * Used in modeling methods like `lm()` and `glm()`
-  * `x <- factor(c("peach", "pear", "marmoset", "peach", "peach"))`
-    * `typeof(x)` = `"integer"`
-    * `str(x)` = `Factor w/ 3 levels "marmoset","peach",..: 2 3 1 2 2`
-      * Note that internally while your order is maintained the
-        integer assignment is made independently by R; peach is 2,
-        even though it was "first".
-    * `levels(x)` = reports the factor names as ordered by integer value
-    * If you want to set the factor order explicitly, the `levels`
-      argument can be used:
-      * `x <- factor(c("peach", "pear", "marmoset", "peach", "peach"), levels = c("peach", "pear", "marmoset"))`
-    * The order of levels is important in some modeling because the
-      first level is taken as baseline.
-  * `table()` = simple contigency table of the factor
-    * By default missing values will be excluded in the counts! set
-      `exclude = NULL` to count them as well. Scott says some
-      statistic shops have altered the table function to have this as
-      the default.
-* Data Frame
-  * Special form of list
-    * Each element is effectively a column
-    * Like a matrix, is rectangular: All columns must have same length
-      (same number of rows)
-    * Like a list, but unlike a matrix, a data frame can be
-      heterogeneous; Each column can be a different data type
-  * Every row is named (attribute `row.names`)
-  * `data.matrix()` = convert to matrix
-  * Creation
-    * `read.table()` [see below](#import)
-    * `data.frame( col1, col2, ... )` = direct generation
-* Names
-  * Most R objects can have names
-    * If you try to name something that is un-name-able, you'll get
-      `target of assignment expands to non-language object`
-  * `names(someObject) <- c("First name", "another name", "name 3")`
-    * If you supply insufficient names, `NA` is assigned to the
-      remaining parts of the object
-    * Assigning too many names yields `'names' attribute [#] must be
-      the same length as the vector [#]`, and the assignment fails
-      (nothing changes).
-  * `dimnames(myMatrix) <- list(c("alpha", "beta"), c("hot", "cold"))`
-    * Assigns row and column names, respectively, to a matrix
-* Attributes
-  * reported via `attributes()`
-  * names & dimnames
-  * dimensions (matrices, arrays)
-  * class
-  * length
-  * user-defined
 
-# <a name="import"></a>Data Import #
+## Vectors, Matrices and Data Frames ##
+
+* "Lists of stuff"
+* Subsetting
+  * Selecting part of a list
+  * `[` = returns an object of the same class, can select multiple elements
+  * `[[` = Access a specific element
+  * `$` = Access by name
+  * ```R
+    x <- matrix( 11:22, nrow = 3, dimnames = list
+      ( c("Alice","Bob","Chris"),
+        c("Alpha","Beta","Gamma","Delta") ) )
+    x[[10]] # Get the 10th element
+    x[ 2, ] # Get the second row
+    x[ "Bob" ] # second row by name
+    x[ , 3] # Third column
+    x[ , "Gamma" ] # Third column by name
+    x[ c(2,3),c(2,4) ] # Slice of rows 2+3 / cols 2+4
+    x[ c("Bob","Chris"), c("Beta","Delta") ]
+    
+    ```
+
+#### Vectors ####
+
+* Most basic object
+  * Scott says instead of scalars R uses vectors-of-length-one. That
+    is, if you need to represent a single number, it's not a scalar
+    object, but rather a vector with one entry. Presumably that's
+    why when you evaluate just `4.3` R will reply `[1] 4.3`; the
+    "[1]" is a reminder that R views this as a vector with one
+    element, which is the double 4.3.
+* Must contain homogenous (same class) entries
+* Creation
+  * `vector()`
+    * `x <- vector("numeric", length = 10)`
+    * Initialized with default values.
+  * `c()` = "concatenate"
+    * `x <- c( 1L, 2L, 3L )`
+    * **CAUTION:** c() will type-cast your input to force it into
+      homogeneity, if required. For example:
+    * `x <- c( 1L, 2L, 3L, 5, "7" )` (integer, numeric, character)
+      * `str(x)` &rarr; `chr [1:5] "1" "2" "3" "5" "7"` (all characters!)
+* Sequences
+  * Iterative vectors, defined easily with ":"
+  * Shorthand `1:20` = 1, 2, 3 ... 19, 20
+  * Scott says to use `seq()` as a safer version:
+    * `1:length(x)`: If x is zero length, you probably wanted an
+      empty vector, but instead you'll get a vector of length 2: `c(1,0)`
+    * `seq(from = 1, to = length(x), length = length(x))` will
+      provide what you need (`integer(0)`, an integer vector with no
+      members).
+
+#### Lists ####
+
+* Represented as a vector, but can be heterogeneous
+* Lists can be turned into arrays by assigning `dim()`. Scott says
+  this is generally useless, but occassionaly very useful;
+  Conversion to an array lets members be accessed by row and column
+  indices/names.
+
+#### Matrices ####
+
+* Two dimensional array
+* default components `NA`
+* `is.matrix()` / `as.matrix()`
+  * as.matrix will make a single column array
+  * `is.array()` will evaluate TRUE
+* `matrix( nrow = 2, ncol = 3 )` = empty
+  * Attribute `dimnames` can be used to name the rows an columns
+* `matrix(1:6, nrow = 2, ncol = 3 )` = populated with the sequence
+  * Construction is "column-wise", meaning the matrix columns are
+    filled first into column 1, then column 2, etc
+  * While maintaining dimensionality, the contents of the matrix are
+    effectively a linear vector wrapped into those dimensions.
+    * However, `is.vector` will evaluate FALSE.
+* `dim()` = return dimensions of matrix
+  * `dim` can also be **assigned**:
+    * `dim(myMatrix) <- c(2,5)`
+  * Doing so will "linearize the contents of the matrix, and then
+    re-construct them (column-by-column) into the specified dimensions.
+* `cbind( col1, col2, ... )` / `rbind( row1, row2, ...)` = pass
+  explicit vectors that you wish to write into columns or rows of a new matrix
+  * **CAUTION:** If your provided vectors are not the same length, R
+    will "pad" them out by *repeating the input vector* until the full
+    dimensionality is filled
+      * `rbind(1:2,5:10)` will yield a first row that is
+        `1,2,1,2,1,2` so that it is the same length as
+        `5,6,7,8,9,10` in the second row.
+      * If R can not fully reuse every repetition of an input vector
+        it will warn you `number of columns of result is not a
+        multiple of vector length` (but will still happily shovel
+        repeating values into the matrix). You will get *no warning
+        at all* if it is able to "cleanly" repeat all the input
+        vectors.
+* `diag()` = weirdly polymorphic matrix function
+  * `myDiag <- diag( myMatrix )` = Extract the diagonal
+  * `mySquare <- diag( 5 )` = Creates a 5x5 matrix
+  * `myMostlyEmpty <- diag(1:10)` = Crates a 10x10 matrix with only
+    the diagonal populated
+  * `diag( myMatrix ) <- value` = Change the diagonal
+  * `x <- diag(5,4)` = Creates a 4x4 empty matrix with a diagonal of fives.
+
+#### Arrays ####
+
+#### Factors ####
+* Factors are "labeled integer vectors"
+* Useful for categorical data, like "Male" / "Female" or "10 ug" /
+  "20 ug" / "50 ug"
+* Functionally will be utilized as vectors, but the labels provide
+  human interpretation (so you don't forget what 4 represents).
+* Used in modeling methods like `lm()` and `glm()`
+* `x <- factor(c("peach", "pear", "marmoset", "peach", "peach"))`
+  * `typeof(x)` = `"integer"`
+  * `str(x)` = `Factor w/ 3 levels "marmoset","peach",..: 2 3 1 2 2`
+    * Note that internally while your order is maintained the
+      integer assignment is made independently by R; peach is 2,
+      even though it was "first".
+  * `levels(x)` = reports the factor names as ordered by integer value
+  * If you want to set the factor order explicitly, the `levels`
+    argument can be used:
+    * `x <- factor(c("peach", "pear", "marmoset", "peach", "peach"), levels = c("peach", "pear", "marmoset"))`
+  * The order of levels is important in some modeling because the
+    first level is taken as baseline.
+* `table()` = simple contigency table of the factor
+  * By default missing values will be excluded in the counts! set
+    `exclude = NULL` to count them as well. Scott says some
+    statistic shops have altered the table function to have this as
+    the default.
+    
+#### Data Frames ####
+
+* Special form of list
+  * Each element is effectively a column
+  * Like a matrix, is rectangular: All columns must have same length
+    (same number of rows)
+  * Like a list, but unlike a matrix, a data frame can be
+    heterogeneous; Each column can be a different data type
+* Every row is named (attribute `row.names`)
+* `data.matrix()` = convert to matrix
+* Creation
+  * `read.table()` [see below](#import)
+  * `data.frame( col1, col2, ... )` = direct generation
+
+# Data Import and Export #
 * [CRAN guide to Data Import/Export][CranImportExport]
+
+### <a name='import'></a>Data Import ###
 * `read.table()` = flexible file import, lots of parameters:
   * `file` = path to file, or a connection
   * `header` = flag indicating a header row is present
   * `spe` = column separator
   * `colClasses` = character vector specifying column classes
-  * `nrows` = number of rows to read in (useful for testing presumably)
+    * Always a good idea to specify this for large files, since
+      otherwise an initial scan is required for R to analyze the file.
+  * `nrows` = number of rows to read in
+    * Presumably this would be useful in testing to read in a subset
+    * Lecture implies that providing the actual value (or something a
+      bit larger) improves read performance?
     * `skip` = number of leading rows to skip over (useful for
       interupted loads))
   * `comment.char` = character that defines a comment row
     * Default is "#"
+    * Set to `""` if you are reading a large file with no comments
   * `stringsAsFactors` = if true (**DEFAULT!**), factorize strings
     * `as.is` = utility flag that is the opposite of stringsAsFactors,
       forces import of data as they are in the file.
@@ -243,7 +291,8 @@
   * `read.csv()` = alias for read.table, but with different defaults
     for CSV files. Use `read.csv2()` for CSV formats from countries
     where ',' is used as a decimal point.
-* `readLines()` = read arbitrary lines from a text file
+* `readLines(fileName, numLines)` = read arbitrary lines from a text file
+  * returns a character vector
 * `load()` = reads in binary R object saved to a file
   * **PREFERRED METHOD**
   * Inverse of `save`
@@ -252,29 +301,67 @@
   * Inverse of `dump`
 * `dget()` = reads ASCII-serialized R objects
   * Inverse of `dput`
-* `unserialize()` = reconsitute an R object via a "connection"
+* `unserialize()` = reconsitute an R object via a [connection](#connections)
   * Inverse of `serialize`
 * `scan()` = less convienent that read.table, but **much** faster; Useful
   for very large files.
 * *I remain a tad confused over the diversity of import / export methods*
 
-# Data Export #
+### Data Export ###
 * `save()` = full export of an R object to a file
   * **PREFERRED METHOD**
   * Inverse of `load` 
   * Default format is binary, but argument `ascii` can be used to make
     an ascii file
   * `save.image()` will save the entire workspace
-* `dump()` = serialize an R object to ASCII text
-  * Inverse of `source`
-  * Takes a list of *names* as input (not objects)
-  * May not generate an exact copy
-* `dput()` = serializes an R object to ASCII text
+* `dput(obj, file = "/file/path/myObj.R")` = serializes an R object to
+  ASCII text
   * Inverse of `dget`
   * Not as complete as `save`; will not export object name
-  * Tries to maintain human readability
+  * Essentially generates R code that will reconstitute the object.
+    * Somewhat human-readable, but the generated code is generally
+      much more verbose than the code you used to generate the object
+      in the first place. Presumably the code generation function
+      works as a reverse-compiler.
+* `dump(c("obj1", "obj2"), file = 'myDump.R')` = serialize one or more
+  R objects to ASCII text
+  * Inverse of `source`
+  * Takes a list of *names* as input (not objects)
+    * When reconstituted with `source` it will invoke the objects under
+      their original names.
+    * You can set the first argument with `ls( pattern = "myRegExp")`
+      to select objects by a complex regular expression
+  * May not generate an exact copy
 * `serialize` =
+* Lectures point out that text-based formats are more friendly with
+  version control systems for finer-granularity change tracking
 * Also see the [Serialization](#serialization) section below
+
+### <a name='connections></a>Connections ###
+
+* Includes files, but also file compression/decompression, URLs, pipes
+* `file()` = general utility read/write
+* `url()` = general utility URL access, supports http, https, ftp and file.
+  * `method = "libcurl"` exposes more schemes, depending on platform
+  * file methods are local machine only and need to be absolute paths
+  * `URLencode` can be used to escape parameters in the
+    URL. `URLdecode()` might be useful for unescaping.
+* Compression algorithms: `gzfile()`, `bzfile()`, `xzfile()`, `unz()`
+  * zip files may be read with unz, but not created
+* `open( myCon ... )` = used to create a handle after specifying one
+  of the connections above.
+  * `close()` and `flush()` can operate on an open connection
+  * `isOpen()` and `isIncomplete()` utility functions
+* Connections have an `open` argument specifying the read/write state
+  * `r`, `w`, `a` = ASCII read, write, append
+  * `rb`, `wb`, `ab` = Binary read, write, append
+  * `r+` = read and write, `w+` = truncate, then read + write, `a+` =
+    read and append. Not sure where these modes would be used; Maybe
+    if memory is limited?
+* `file( description = "clipboard", open = "r" )` = special mode to
+  read the X11 clipboard. Setting description to "X11_secondary" reads
+  the alternate clipboard.
+* Session limit of 125 user connections
 
 # Packages #
 * `a <- available.packages()` = puts list of all packages in `a`
@@ -341,6 +428,10 @@ expression(z <- 3)
 
 #### <a name='dataclassweird'></a>data.class() vs class() ####
 
+R documenation: *For compatibility reasons ...  When ‘x’ is ‘integer’,
+the result of ‘data.class(x)’ is ‘"numeric"’ even when ‘x’ is
+classed.*
+     
 ```R
 > x <- vector('integer', length = 10)
 > inherits(x, what = 'integer')
@@ -368,7 +459,23 @@ expression(z <- 3)
   * Includes training packages
 
 
-[WickhamDataStructures]: http://adv-r.had.co.nz/Data-structures.html
+#### Markdown Notes ####
+Not R *per se*, but these have been useful in making this document...
+* [Daring Fireball][daringfireball] - Original Markdown specification
+* [Internal document anchors][NamedAnchors] - `<a
+  name='anchorname'></a>` - You must use single quotes!
+* [GitHub Markdown][githubmd] - Note that the "extra" features may not
+  port to tools like knittr
+  * Within code blocks you can use `` ```R `` to specify R
+    [syntax highlighting][githubsyntax]. Unfortunately this
+    [does not work][https://stackoverflow.com/a/25058886] with inline
+    code blocks.
+
 [BigNumbersInR]: https://stackoverflow.com/questions/2053397/long-bigint-decimal-equivalent-datatype-in-r
-[SObignumbers]: https://stackoverflow.com/questions/17724382/display-exact-value-of-a-variable-in-r
 [CranImportExport]: https://cran.r-project.org/doc/manuals/R-data.html
+[NamedAnchors]: https://stackoverflow.com/questions/6695439/how-do-you-create-link-to-a-named-anchor-in-multimarkdown
+[SObignumbers]: https://stackoverflow.com/questions/17724382/display-exact-value-of-a-variable-in-r
+[WickhamDataStructures]: http://adv-r.had.co.nz/Data-structures.html
+[daringfireball]: https://daringfireball.net/projects/markdown/syntax
+[githubmd]: https://help.github.com/articles/github-flavored-markdown/
+[githubsyntax]: https://help.github.com/articles/github-flavored-markdown/#syntax-highlighting
