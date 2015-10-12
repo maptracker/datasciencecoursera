@@ -2,7 +2,7 @@ Notes and examples for trying to "mentally map" Perl paradigms to R.
 
 ### Implicit loops ###
 
-* (./sao.png)**Scott Replies**
+* ![a][Scott] **Scott Replies**
   * Subsetting operations simply utilize a logical vector to select
     the desired subset. The column tests are each generating a logical
     vecor, which are then combined with the `&` element-wise operator
@@ -49,3 +49,5 @@ is shared between the statements so the comparison is "aligned".
   `and`. This is clearly not the case:
   * `&` is either Perl's `&&` or `and`
   * Unclear to me what `&&` is doing in R
+
+[Scott]: ./sao.png "Reply from Scott"
