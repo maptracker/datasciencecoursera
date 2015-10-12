@@ -11,23 +11,6 @@
   * Scott avoids this, because it can cause confusion when dealing
     with parameter assignment, which also uses equals, for example
     with the 'nrow' parameter in `diag(1:2, nrow = 4)`
-* Arguments to functions are sometimes passed at particular positions
-  (first parameter, second parameter, etc), and sometimes passed by
-  name (`length = 5`).
-  * It appears that named parameters have a specific parameter
-    position as well, which is reported in the documentation for the
-    function. So for example in `matrix()`, "nrow" can be passed as
-    the second argument and "ncol" as the third:
-    
-    ```R
-# From the documentation:
-# matrix(data = NA, nrow = 1, ncol = 1, byrow = FALSE,
-#        dimnames = NULL)
-> x <- matrix(1:6, nrow = 2, ncol = 3)
-> y <- matrix(1:6, 2, 3)
-> identical(x,y)
-[1] TRUE
-    ```
 * R is case-sensitive: b != B
 * Left methods and right methods may have the same name, but are
   generally (always?) different functions.
@@ -41,6 +24,12 @@
         with the "<-" arrow tacked on), which R calls a "replacement
         method". Scott calls this "dim gets"
       * `?dim` will show you help for *both* methods
+
+# Non-obvious Math Operators #
+
+* `%%` Modulus
+* `%/%` Integer division (no decimal / remainder)
+* `%*%` Matrix multiplication
 
 # Objects #
 
@@ -63,6 +52,11 @@
       (nothing changes).
   * `dimnames(myMatrix) <- list(c("alpha", "beta"), c("hot", "cold"))`
     * Assigns row and column names, respectively, to a matrix
+  * In some circumstances R allows "partial matching", where you need
+    not provide the entire name, only enough of the first letters to
+    unambiguously distinguish the name from other names in the object.
+    * This is potentially dangerous and should probably not be used in
+      practice.
 * Attributes
   * `attributes()` can get and set values
   * names & dimnames, dimensions (matrices, arrays), class, length, etc
@@ -219,6 +213,22 @@ x[ c(2,3),c(2,4) ]     # Slice of rows 2+3 / cols 2+4
 x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
   ```
 
+* Missing values can be found with `is.na()`, and exclued with `!is.na()`.
+  * `complete.cases()` can be used to exclude any row with a missing
+    value in any column.
+
+  ```R
+> x <- data.frame( color = c("blue", "red", NA, "yellow"),
+                   weight = c(13.2, NA, NA, 19.9))
+> !is.na(x$color)
+[1]  TRUE  TRUE FALSE  TRUE
+> ccx <- complete.cases(x)
+> x[ ccx, ]
+   color weight
+1   blue   13.2
+4 yellow   19.9
+  ```
+
 #### Vectors ####
 
 * Most basic object
@@ -248,6 +258,37 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
     * `seq(from = 1, to = length(x), length = length(x))` will
       provide what you need (`integer(0)`, an integer vector with no
       members).
+
+##### Vectorization #####
+
+* Many R operations occur in vector context - the arguments are
+  vectors, and are operated on in an implicit loop on all vector
+  members.
+* Be very aware of [recycling](#recycling), which will occur if you
+  perform operations with two vectors of different length. You will
+  only be warned of this if the shorter vector can not be "evenly"
+  recycled to match the longer one.
+
+```R
+> v <- c(4, 10, 25)
+> v + 3
+[1]  7 13 28
+> v %% 2
+[1] 0 0 1
+> v < 14
+[1]  TRUE  TRUE FALSE
+> w <- c(2,3,2)
+> v * w
+[1]  8 30 50
+> x <- c(2,4,6,8,10)
+> v - x  # recycling is unhappy
+[1]  2  6 19 -4  0
+Warning message:
+In v - x : longer object length is not a multiple of shorter object length
+> y <- c(2)
+> v - y  # recycling is content!!
+[1]  2  8 23
+```
 
 #### Lists ####
 
@@ -380,6 +421,7 @@ In rbind(16:18, 5:9) :
   * Like a list, but unlike a matrix, a data frame can be
     heterogeneous; Each column can be a different data type
 * Every row is named (attribute `row.names`)
+  * These names are preserved when subsetting.
 * `data.matrix()` = convert to matrix
 * Creation
   * `read.table()` [see below](#import)
@@ -497,6 +539,113 @@ In rbind(16:18, 5:9) :
   read the X11 clipboard. Setting description to "X11_secondary" reads
   the alternate clipboard.
 * Session limit of 125 user connections
+
+# Control Structures #
+
+* Useful functions
+  * `seq( along.with = myObject )` = same as `seq_along(myObject)` =
+    get an iteration of the things in myObject.
+  * `length(myObject)` = get the total size / length of myObject
+  
+#### if, else ####
+
+```R
+size <- if (!is.numeric(x)) {
+    "Error"
+} else if (x < 10) {
+    "Small"
+} else if (x < 100) {
+    "Medium"
+} else {
+    "Large"
+}
+```
+#### for loops ####
+
+* Curly braces are not needed if the interior of the loop is a single
+  statement.
+
+```R
+for (i in 1:10) {
+    for (j in 1:10) {
+        # Do something
+    }
+}
+
+dwarves <- c("Happy", "Sleepy", "Grumpy")
+for (dwarf in dwarves) {
+   cat("Looking for", dwarf, "\n")
+}
+```
+
+#### while loops ####
+
+```R
+i <- 0
+while (i < 10) {
+  i <- i + 1
+  print(i)
+}
+```
+
+#### repeat, next, break, return ####
+
+* `repeat` is basically `while( TRUE )`
+* `break` will exit any of the loop structures
+* `next` will continue the loop to the next iteration
+* `return` exits a function with a return value
+
+```R
+repeat {
+   if (someCondition) break
+   # Do stuff
+}
+```
+
+# Functions #
+
+* R will fail if you access a function with fewer arguments than it
+  was defined with, unless the missing arguments have a default set:
+  `argument "arg1" is missing, with no default`
+* It will always fail if you pass more arguments than expected,
+  or use argument names that are not explicitly specified in the
+  function (`unused argument`).
+* `class(myFunc)` will return "function"
+* Arguments to functions have both a position in the argument list
+  (first parameter, second parameter, etc) and a name (`length = 5`).
+  * Named parameters can be passed in any position in the function call.
+  * If an un-named parameter is encountered, R will slot that into the
+    first "unclaimed" argument. So for example in `matrix()`, "nrow"
+    can be passed as the second argument and "ncol" as the third:
+    
+    ```R
+# From the documentation:
+# matrix(data = NA, nrow = 1, ncol = 1, byrow = FALSE,
+#        dimnames = NULL)
+> x <- matrix(ncol = 3, 1:6, nrow = 2 )
+> y <- matrix(1:6, 2, 3)
+> identical(x,y)
+[1] TRUE
+    ```
+    
+  * This is crazy goofy and looks prone to all kinds of hard-to-catch
+    bugs. Probably best to not mess with the order and used named
+    arguments as much as possible.
+    * Arguments also use partial name matching. Inside a function call
+      this is probably not as dangerous as in a data frame, but
+      likewise if the function changes over time a unique partial
+      argument name might become non-unique later.
+
+```R
+myFunc <- function( arg1, arg2 = optionalDefaultValue) {
+   # Stuff happens
+   returnValue # Last operation gets returned
+}
+myFunc <- function( arg1, arg2 = 2) {
+    arg1 + arg2
+}
+```
+
 
 # Packages #
 * `a <- available.packages()` = puts list of all packages in `a`
