@@ -115,7 +115,7 @@
     * `is.null()`
       * Throws an error with no argument. Seems like that should be "TRUE"
     * Weird behavior. Throws an error when passed to is.na(), but
-      spits out a bizzare value of `logical(0)` with is.nan(). May
+      spits out a bizarre value of `logical(0)` with is.nan(). May
       be a sign of a latent malignant AI - must watch carefully.
     * Asking Scott about NULL seems to make him uncomfortable, like
       telling a parent that their child is eating paste.
@@ -188,7 +188,7 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
     why when you evaluate just `4.3` R will reply `[1] 4.3`; the
     "[1]" is a reminder that R views this as a vector with one
     element, which is the double 4.3.
-* Must contain homogenous (same class) entries
+* Must contain homogeneous (same class) entries
 * Creation
   * `vector()`
     * `x <- vector("numeric", length = 10)`
@@ -213,7 +213,7 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
 
 * Represented as a vector, but can be heterogeneous
 * Lists can be turned into arrays by assigning `dim()`. Scott says
-  this is generally useless, but occassionaly very useful;
+  this is generally useless, but occasionally very useful;
   Conversion to an array lets members be accessed by row and column
   indices/names.
 
@@ -281,7 +281,7 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
     * `x <- factor(c("peach", "pear", "marmoset", "peach", "peach"), levels = c("peach", "pear", "marmoset"))`
   * The order of levels is important in some modeling because the
     first level is taken as baseline.
-* `table()` = simple contigency table of the factor
+* `table()` = simple contingency table of the factor
   * By default missing values will be excluded in the counts! set
     `exclude = NULL` to count them as well. Scott says some
     statistic shops have altered the table function to have this as
@@ -304,6 +304,9 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
 # Data Import and Export #
 
 * [CRAN guide to Data Import/Export][CranImportExport]
+* *I remain very confused over the diversity of import / export methods*
+  * Some of the functions appear to be almost identical (`serialize`
+    vs `saveRDS`) and it's unclear what the nuances are.
 
 ### <a name='import'></a>Data Import ###
 
@@ -319,7 +322,7 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
     * Lecture implies that providing the actual value (or something a
       bit larger) improves read performance?
     * `skip` = number of leading rows to skip over (useful for
-      interupted loads))
+      interrupted loads))
   * `comment.char` = character that defines a comment row
     * Default is "#"
     * Set to `""` if you are reading a large file with no comments
@@ -338,16 +341,16 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
 * `load()` = reads in binary R object saved to a file
   * **PREFERRED METHOD**
   * Inverse of `save`
-  * Can reconstitue an entire R workspace
+  * Can reconstitute an entire R workspace
 * `source()` = reads ASCII-serialized R objects
   * Inverse of `dump`
 * `dget()` = reads ASCII-serialized R objects
   * Inverse of `dput`
 * `unserialize()` = reconsitute an R object via a [connection](#connections)
-  * Inverse of `serialize`
-* `scan()` = less convienent that read.table, but **much** faster; Useful
+  * Inverse of `serialize`. Can also use `loadRDS`
+* `loadRDS` = Similar to `unserialize`. Preferred?
+* `scan()` = less convenient that read.table, but **much** faster; Useful
   for very large files.
-* *I remain a tad confused over the diversity of import / export methods*
 
 ### Data Export ###
 * `save()` = full export of an R object to a file
@@ -374,7 +377,13 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
     * You can set the first argument with `ls( pattern = "myRegExp")`
       to select objects by a complex regular expression
   * May not generate an exact copy
-* `serialize` =
+* `serialize` = Serialize a single R object
+  * Inverse of `unserialize`. The output can also be read by `readRDS`
+    * Docs say `saveRDS` is "more convenient"
+  * Default is binary format, but can be set to ASCII
+  * Documentation warns that the format may change in future releases of R
+* `saveRDS()` = Serialize a single R object
+  * Inverse of `loadRDS`. Resultant files can also be read by `unserialize`?
 * Lectures point out that text-based formats are more friendly with
   version control systems for finer-granularity change tracking
 * Also see the [Serialization](#serialization) section below
@@ -418,7 +427,7 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
   * `biocLite(c("<PACKAGE_1>","<PACKAGE_2>",...))` = Installs just a
     subset of packages
   * AFAICT this is not a general loading mechanism but is rather a
-    specific helper script for mananging large-scalle package
+    specific helper script for managing large-scale package
     installations. Probably common to other resources as well.
 * `library(ggplot2)` = load the ggplot2 package into your current R session
   * `install()` downloads code to your local machine. Needs to be
@@ -470,7 +479,7 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
 
 #### <a name='dataclassweird'></a>data.class() vs class() ####
 
-R documenation: *For compatibility reasons ...  When ‘x’ is ‘integer’,
+R documentation: *For compatibility reasons ...  When ‘x’ is ‘integer’,
 the result of ‘data.class(x)’ is ‘"numeric"’ even when ‘x’ is
 classed.*
      
@@ -512,6 +521,9 @@ Not R *per se*, but these have been useful in making this document...
     [syntax highlighting][githubsyntax]. Unfortunately this
     [does not work][https://stackoverflow.com/a/25058886] with inline
     code blocks.
+    * [Code blocks in lists][CodeBlockInList] are finicky. The leading
+      and trailing backticks need to be at the same indent as the list
+      item content.
 
 [BigNumbersInR]: https://stackoverflow.com/questions/2053397/long-bigint-decimal-equivalent-datatype-in-r
 [CranImportExport]: https://cran.r-project.org/doc/manuals/R-data.html
@@ -521,3 +533,4 @@ Not R *per se*, but these have been useful in making this document...
 [daringfireball]: https://daringfireball.net/projects/markdown/syntax
 [githubmd]: https://help.github.com/articles/github-flavored-markdown/
 [githubsyntax]: https://help.github.com/articles/github-flavored-markdown/#syntax-highlighting
+[CodeBlockInList]: https://stackoverflow.com/questions/6235995/markdown-github-syntax-highlighting-of-code-block-as-a-child-of-a-list
