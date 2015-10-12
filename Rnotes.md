@@ -120,6 +120,7 @@
       * These can be assigned directly with `as`, for example `as.character(NA)`
       * More commonly the mode will be assigned "automatically" to
         make the mode fit the surrounding context:
+        
         ```R
 > x <- c( one = 1, two = 2, four = 4)
 > x[c("one", "three")]
@@ -128,6 +129,7 @@
 > mode(x[c("one", "three")][[2]])
 [1] "numeric"
         ```
+        
         The "NA" is mode numeric, since that is the mode of the source vector
     * `NaN` = Not a Number
       * `is.nan()`
@@ -264,13 +266,15 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
   * **CAUTION:** If your provided vectors are not the same length, R
     will "pad" them out by *repeating the input vector* until the full
     dimensionality is filled. See the [Recycling section](#recycling).
-* `diag()` = weirdly polymorphic matrix function
-  * `myDiag <- diag( myMatrix )` = Extract the diagonal
-  * `mySquare <- diag( 5 )` = Creates a 5x5 matrix
-  * `myMostlyEmpty <- diag(1:10)` = Crates a 10x10 matrix with only
-    the diagonal populated
-  * `diag( myMatrix ) <- value` = Change the diagonal
-  * `x <- diag(5,4)` = Creates a 4x4 empty matrix with a diagonal of fives.
+* `diag()` = weirdly polymorphic matrix function:
+
+  ```R
+  myDiag <- diag( myMatrix ) # Extract the diagonal
+  mySquare <- diag( 5 ) # Creates a 5x5 matrix
+  myMostlyEmpty <- diag(1:10) # Creates a 10x10 matrix with only the diagonal populated
+  diag( myMatrix ) <- value # Change the diagonal
+  x <- diag(5,4)  # Creates a 4x4 empty matrix with a diagonal of fives.
+  ```
 
 #### <a name='recycling'></a>Recycling ####
 
@@ -283,6 +287,7 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
   * In other cases, the input will be **recycled**. That is, R will
     keep looping through the input to fill out the result. For
     example:
+    
     ```R
 > rbind(16:18,5:9)
      [,1] [,2] [,3] [,4] [,5]
@@ -292,6 +297,7 @@ Warning message:
 In rbind(16:18, 5:9) :
   number of columns of result is not a multiple of vector length (arg 1)
     ```
+    
       * In the case above, the matrix has five columns, but the first
         row has only three values (`c(16,17,18)`) provided. R responds
         by "recycling" the row over and over until the matrix is
@@ -302,6 +308,7 @@ In rbind(16:18, 5:9) :
         of columns of result is not a multiple of vector length`
       * If R was able to "cleanly" recycle the input, **you will be
         given no warning**:
+        
         ```R
 > rbind(7:9, 20:28)
      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9]
