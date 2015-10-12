@@ -2,7 +2,7 @@ Notes and examples for trying to "mentally map" Perl paradigms to R.
 
 ### Implicit loops ###
 
-* <span color="orange">Scott Replies</span>
+* <span color="#ff9900">Scott Replies</span>
   * Subsetting operations simply utilize a logical vector to select
     the desired subset. The column tests are each generating a logical
     vecor, which are then combined with the `&` element-wise operator
