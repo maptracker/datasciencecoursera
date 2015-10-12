@@ -2,7 +2,7 @@ Notes and examples for trying to "mentally map" Perl paradigms to R.
 
 ### Implicit loops ###
 
-* <span style='color:orange; font-weight:bold'>Scott Replies:</span>
+* <span color='#f90' border=#f60 dotted 1px'>Scott Replies</span>
   * Subsetting operations simply utilize a logical vector to select
     the desired subset. The column tests are each generating a logical
     vecor, which are then combined with the `&` element-wise operator
@@ -39,7 +39,7 @@ is shared between the statements so the comparison is "aligned".
 
 ### Logical Tests ###
 
-* <span style='color:orange; font-weight:bold'>Scott Replies:</span>
+* <span color='#f90' border=#f60 dotted 1px'>Scott Replies</span>
   * `&` is vectorized - it applies across all elements of a list or vector
   * `&&` expects length-1 operands, will ignore 'extra' values. It is
     also lazy evaluated, in that a logical chain will stop evaluation
