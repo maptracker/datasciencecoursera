@@ -16,7 +16,8 @@
   name (`length = 5`).
   * It appears that named parameters have a specific parameter
     position as well, which is reported in the documentation for the
-    function. So for example:
+    function. So for example in `matrix()`, "nrow" can be passed as
+    the second argument and "ncol" as the third:
     
     ```R
 # From the documentation:
@@ -134,7 +135,9 @@
       mode appears to be logical.
       * These can be assigned directly with `as`, for example `as.character(NA)`
       * More commonly the mode will be assigned "automatically" to
-        make the mode fit the surrounding context:
+        make the mode fit the surrounding context. In the example
+        below, the "NA" is mode numeric, since that is the mode of the
+        source vector:
         
         ```R
 > x <- c( one = 1, two = 2, four = 4)
@@ -144,8 +147,6 @@
 > mode(x[c("one", "three")][[2]])
 [1] "numeric"
         ```
-        
-        The "NA" is mode numeric, since that is the mode of the source vector
     * `NaN` = Not a Number
       * `is.nan()`
       * More specific form of NA
@@ -535,6 +536,7 @@ In rbind(16:18, 5:9) :
   will then execute the code represented by the initial text. So
   `eval( parse( text = "some R code" ) )` is the same as eval("some
   R code") in many other languages:
+  
   ```R
 > myExp <- parse(text = "z <- 3")
 > myExp
@@ -604,9 +606,10 @@ Not R *per se*, but these have been useful in making this document...
     [syntax highlighting][githubsyntax]. Unfortunately this
     [does not work](https://stackoverflow.com/a/25058886) with inline
     code blocks.
-    * [Code blocks in lists][CodeBlockInList] are finicky. The leading
-      and trailing backticks need to be at the same indent as the list
-      item content.
+    * [Code blocks in lists][CodeBlockInList] are quite finicky. The
+      leading and trailing backticks need to be at the same indent as
+      the list item content. Also, it seems like you need a newline
+      before the first set of backticks.
   * [HTML sanitization][GitHubSanitization] - You can use raw HTML
     tags, but GitHub will strip out many of the attributes for
     security. The link shows the WHITELIST structure used. Both
