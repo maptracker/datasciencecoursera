@@ -5,13 +5,27 @@
   right-hand argument. In the above example, x and y will be "the
   same", but will be two independent objects (manipulating x will not
   change y, even if y is a data frame or other 'complex' object).
+  * FWIW, the `identical(x,y)` function can be used to do a deep
+    identity test on two objects.
 * `=` can be used as an alias for `<-`
   * Scott avoids this, because it can cause confusion when dealing
     with parameter assignment, which also uses equals, for example
     with the 'nrow' parameter in `diag(1:2, nrow = 4)`
-* Parameters to functions are sometimes passed at particular positions
+* Arguments to functions are sometimes passed at particular positions
   (first parameter, second parameter, etc), and sometimes passed by
   name (`length = 5`).
+  * It appears that named parameters have a specific parameter
+    position as well, which is reported in the documentation for the
+    function. So for example:
+    ```R
+# From the documentation:
+# matrix(data = NA, nrow = 1, ncol = 1, byrow = FALSE,
+#        dimnames = NULL)
+> x <- matrix(1:6, nrow = 2, ncol = 3)
+> y <- matrix(1:6, 2, 3)
+> identical(x,y)
+[1] TRUE
+    ```
 * R is case-sensitive: b != B
 * Left methods and right methods may have the same name, but are
   generally (always?) different functions.
@@ -519,15 +533,15 @@ In rbind(16:18, 5:9) :
   'expression'. That expression can then be fed to `eval`, which
   will then execute the code represented by the initial text. So
   `eval( parse( text = "some R code" ) )` is the same as eval("some
-  R code") in many other languages.
-  * ```R
-    > myExp <- parse(text = "z <- 3")
-    > myExp
-    expression(z <- 3)
-    > eval(myExp)
-    > z
-    [1] 3
-    ```
+  R code") in many other languages:
+  ```R
+> myExp <- parse(text = "z <- 3")
+> myExp
+expression(z <- 3)
+> eval(myExp)
+> z
+[1] 3
+  ```
 * See also the [Data Import](#import) section above.
 
 ## Scott Wisdom ##
@@ -542,7 +556,7 @@ In rbind(16:18, 5:9) :
       someFunction() contained in the package somePackage.
     * `get("someFunction", pos = "somePackage")( color = "lizzard" )`
       = same as above, different syntax using the `get` function.
-  
+
 ## Weird Things ##
 
 #### <a name='dataclassweird'></a>data.class() vs class() ####
