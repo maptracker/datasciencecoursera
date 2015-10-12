@@ -327,7 +327,7 @@ In rbind(16:18, 5:9) :
   human interpretation (so you don't forget what 4 represents).
 * Used in modeling methods like `lm()` and `glm()`
 
-  ``R
+  ```R
 > x <- factor(c("peach", "pear", "marmoset", "peach", "peach"))
 > typeof(x)
 [1] "integer"
@@ -340,14 +340,14 @@ In rbind(16:18, 5:9) :
     was "first".
   * `levels(x)` = reports the factor names as ordered by integer value
   * If you want to set the factor order explicitly, the `levels`
-    argument can be used
+    argument can be used:
 
     ```R
     x <- factor(c("peach", "pear", "marmoset", "peach", "peach"),
                  levels = c("peach", "pear", "marmoset"))
     ```
-    
-  * The order of levels is important in some modeling because the
+
+* The order of levels is important in some modeling because the
     first level is taken as baseline.
 * `table()` = simple contingency table of the factor
   * By default missing values will be excluded in the counts! set
