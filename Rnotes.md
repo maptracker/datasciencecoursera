@@ -326,16 +326,27 @@ In rbind(16:18, 5:9) :
 * Functionally will be utilized as vectors, but the labels provide
   human interpretation (so you don't forget what 4 represents).
 * Used in modeling methods like `lm()` and `glm()`
-* `x <- factor(c("peach", "pear", "marmoset", "peach", "peach"))`
-  * `typeof(x)` = `"integer"`
-  * `str(x)` = `Factor w/ 3 levels "marmoset","peach",..: 2 3 1 2 2`
-    * Note that internally while your order is maintained the
-      integer assignment is made independently by R; peach is 2,
-      even though it was "first".
+
+  ``R
+> x <- factor(c("peach", "pear", "marmoset", "peach", "peach"))
+> typeof(x)
+[1] "integer"
+> str(x)
+ Factor w/ 3 levels "marmoset","peach",..: 2 3 1 2 2
+  ```
+
+  * Note that internally while your order is maintained the integer
+    assignment is made independently by R; peach is 2, even though it
+    was "first".
   * `levels(x)` = reports the factor names as ordered by integer value
   * If you want to set the factor order explicitly, the `levels`
-    argument can be used:
-    * `x <- factor(c("peach", "pear", "marmoset", "peach", "peach"), levels = c("peach", "pear", "marmoset"))`
+    argument can be used
+
+    ```R
+    x <- factor(c("peach", "pear", "marmoset", "peach", "peach"),
+                 levels = c("peach", "pear", "marmoset"))
+    ```
+    
   * The order of levels is important in some modeling because the
     first level is taken as baseline.
 * `table()` = simple contingency table of the factor
