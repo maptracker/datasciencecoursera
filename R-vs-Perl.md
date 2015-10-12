@@ -2,7 +2,7 @@ Notes and examples for trying to "mentally map" Perl paradigms to R.
 
 ### Implicit loops ###
 
-* ![a][Scott] **Scott Replies**
+* ![Scott][Scott] Scott Feedback:
   * Subsetting operations simply utilize a logical vector to select
     the desired subset. The column tests are each generating a logical
     vecor, which are then combined with the `&` element-wise operator
@@ -39,7 +39,7 @@ is shared between the statements so the comparison is "aligned".
 
 ### Logical Tests ###
 
-* <span color='#f90' border='#f60 dotted 1px'>Scott Replies</span>
+* ![Scott][Scott] Scott Feedback:
   * `&` is vectorized - it applies across all elements of a list or vector
   * `&&` expects length-1 operands, will ignore 'extra' values. It is
     also lazy evaluated, in that a logical chain will stop evaluation
@@ -50,4 +50,4 @@ is shared between the statements so the comparison is "aligned".
   * `&` is either Perl's `&&` or `and`
   * Unclear to me what `&&` is doing in R
 
-[Scott]: ./sao.png "Reply from Scott"
+[Scott]: ./sao.png "Information or advice from Scott"
