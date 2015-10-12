@@ -5,6 +5,13 @@
   right-hand argument. In the above example, x and y will be "the
   same", but will be two independent objects (manipulating x will not
   change y, even if y is a data frame or other 'complex' object).
+* `=` can be used as an alias for `<-`
+  * Scott avoids this, because it can cause confusion when dealing
+    with parameter assignment, which also uses equals, for example
+    with the 'nrow' parameter in `diag(1:2, nrow = 4)`
+* Parameters to functions are sometimes passed at particular positions
+  (first parameter, second parameter, etc), and sometimes passed by
+  name (`length = 5`).
 * R is case-sensitive: b != B
 * Left methods and right methods may have the same name, but are
   generally (always?) different functions.
@@ -45,7 +52,7 @@
   * names & dimnames, dimensions (matrices, arrays), class, length, etc
   * user-defined
 
-#### Object utility methods ####
+#### Object Utility Methods ####
 
 * `str()` = "Structure"
   * Provides a verbose report of what the object is and what
@@ -107,6 +114,21 @@
     * Apparently returned for "not possible", eg `as.integer("pineapple")`
     * Is the default value for some objects, such as matrices without
       any values.
+    * NA can exist in many (any?) of the other modes. That is, there
+      is an integer mode for NA, a character mode, etc. The default
+      mode appears to be logical.
+      * These can be assigned directly with `as`, for example `as.character(NA)`
+      * More commonly the mode will be assigned "automatically" to
+        make the mode fit the surrounding context:
+        ```R
+> x <- c( one = 1, two = 2, four = 4)
+> x[c("one", "three")]
+ one <NA> 
+   1   NA 
+> mode(x[c("one", "three")][[2]])
+[1] "numeric"
+        ```
+        The "NA" is mode numeric, since that is the mode of the source vector
     * `NaN` = Not a Number
       * `is.nan()`
       * More specific form of NA
@@ -241,16 +263,7 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
   explicit vectors that you wish to write into columns or rows of a new matrix
   * **CAUTION:** If your provided vectors are not the same length, R
     will "pad" them out by *repeating the input vector* until the full
-    dimensionality is filled
-      * `rbind(1:2,5:10)` will yield a first row that is
-        `1,2,1,2,1,2` so that it is the same length as
-        `5,6,7,8,9,10` in the second row.
-      * If R can not fully reuse every repetition of an input vector
-        it will warn you `number of columns of result is not a
-        multiple of vector length` (but will still happily shovel
-        repeating values into the matrix). You will get *no warning
-        at all* if it is able to "cleanly" repeat all the input
-        vectors.
+    dimensionality is filled. See the [Recycling section](#recycling).
 * `diag()` = weirdly polymorphic matrix function
   * `myDiag <- diag( myMatrix )` = Extract the diagonal
   * `mySquare <- diag( 5 )` = Creates a 5x5 matrix
@@ -258,6 +271,43 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
     the diagonal populated
   * `diag( myMatrix ) <- value` = Change the diagonal
   * `x <- diag(5,4)` = Creates a 4x4 empty matrix with a diagonal of fives.
+
+#### <a name='recycling'></a>Recycling ####
+
+* Some structures have an implicit size (for example, a 4x4 matrix has
+  a length of 16). In at least some cases, these structures can be
+  provided with content that has a lesser size. R can behave in
+  different ways in different circumstances.
+  * In some cases, the "extra" values will be populated with the
+    initial/default values for the mode.
+  * In other cases, the input will be **recycled**. That is, R will
+    keep looping through the input to fill out the result. For
+    example:
+    ```R
+> rbind(16:18,5:9)
+     [,1] [,2] [,3] [,4] [,5]
+[1,]   16   17   18   16   17
+[2,]    5    6    7    8    9
+Warning message:
+In rbind(16:18, 5:9) :
+  number of columns of result is not a multiple of vector length (arg 1)
+    ```
+      * In the case above, the matrix has five columns, but the first
+        row has only three values (`c(16,17,18)`) provided. R responds
+        by "recycling" the row over and over until the matrix is
+        padded out to the full five columns.
+      * In this case, R can pad out the row by recycling the input
+        twice, but it has "one left over" (`5 %% 3 == 2`). This upsets
+        it, and while it completes the recycling, it complains `number
+        of columns of result is not a multiple of vector length`
+      * If R was able to "cleanly" recycle the input, **you will be
+        given no warning**:
+        ```R
+> rbind(7:9, 20:28)
+     [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9]
+[1,]    7    8    9    7    8    9    7    8    9
+[2,]   20   21   22   23   24   25   26   27   28
+        ```
 
 #### Arrays ####
 
@@ -519,11 +569,19 @@ Not R *per se*, but these have been useful in making this document...
   port to tools like knittr
   * Within code blocks you can use `` ```R `` to specify R
     [syntax highlighting][githubsyntax]. Unfortunately this
-    [does not work][https://stackoverflow.com/a/25058886] with inline
+    [does not work](https://stackoverflow.com/a/25058886) with inline
     code blocks.
     * [Code blocks in lists][CodeBlockInList] are finicky. The leading
       and trailing backticks need to be at the same indent as the list
       item content.
+  * [HTML sanitization][GitHubSanitization] - You can use raw HTML
+    tags, but GitHub will strip out many of the attributes for
+    security. The link shows the WHITELIST structure used. Both
+    attributes and tags are excluded. For example, a `style` attribute
+    is not allowed, but `color` is. `span` tags are not allowed, but
+    `b` is.
+    * It is apparently
+      [impossible to colorize text](https://stackoverflow.com/q/23904274)
 
 [BigNumbersInR]: https://stackoverflow.com/questions/2053397/long-bigint-decimal-equivalent-datatype-in-r
 [CranImportExport]: https://cran.r-project.org/doc/manuals/R-data.html
@@ -534,3 +592,4 @@ Not R *per se*, but these have been useful in making this document...
 [githubmd]: https://help.github.com/articles/github-flavored-markdown/
 [githubsyntax]: https://help.github.com/articles/github-flavored-markdown/#syntax-highlighting
 [CodeBlockInList]: https://stackoverflow.com/questions/6235995/markdown-github-syntax-highlighting-of-code-block-as-a-child-of-a-list
+[GitHubSanitization]: https://github.com/jch/html-pipeline/blob/master/lib/html/pipeline/sanitization_filter.rb
