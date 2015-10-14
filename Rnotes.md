@@ -670,10 +670,10 @@ myFunc <- function( arg1, arg2 = 2) {
 * ... is quite weird
 * Scott recommends: [How R Searches and Finds Stuff][RScopeSearching]
 * All objects in R reside in an **environment** (which is also an
-  object). Each environment has two<sup>*</sup> things:
+  object). Each environment has two<sup>&dagger;</sup> things:
   1. A **frame**, which is a structure holding all the environment's
      objects
-  2. The **owner** (parent) environment. <sup>*</sup>*The "Empty
+  2. The **owner** (parent) environment. <sup>&dagger;</sup>*The "Empty
      Environment" is the ultimate top-level environment, it does not
      have an owner.*
 * Environments can be manually created with `new.env()`
