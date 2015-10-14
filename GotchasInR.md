@@ -23,19 +23,22 @@
 * There is no `strict` mode in R. It will work tierelessly to help
   you, even if it kills you in the process. Code defensively.
 * [class() and data.class()](./Rnotes.md#dataclassweird) return
-  different modes for integer vecors (integer and numeric,
+  different modes for integer vectors ("integer" and "numeric",
   respectively).
 * Argument parsing in [functions](./Rnotes.md#functions) is weird.
   * R can use partial matching in many places, including argument
     names. This is dangerous, aspire to use full argument names.
-* Functions with the same name in different namespaces will
-  [mask](./Rnotes.md#masking) each other. Use `conflicts()` to get a
-  list of currently masked functions and `find()` to determine the
-  packages they're in.
-* [Symbol scoping](./Rnotes.md#scoping) is kind of weird.]
+* [Symbol scoping](./Rnotes.md#scoping) is kind of weird.
   * Scope is associated with **functions**, not the call stack.
+  * Functions with the same name in different namespaces will
+    [mask](./Rnotes.md#masking) each other. Use `conflicts()` to get a
+    list of currently masked functions and `find()` to determine the
+    packages they're in.
 * Don warns that R sometimes unexpectedly vectorizes output. If the
   output had a column header, then in the process of forcing a vector
-  R might coerce all your values to character to accomodate the
+  R will coerce all your values to character to accomodate the
   header.
 * `:::` is not the same as `::`!
+* `sprintf()` can use vectors as bind arguments, producing a character
+  vector as output. It will [recycle](./Rnotes.md#recycling) if
+  needed, but only if all vector arguments are of the same modulus.

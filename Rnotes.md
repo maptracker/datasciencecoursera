@@ -339,13 +339,13 @@ In v - x : longer object length is not a multiple of shorter object length
   a length of 16). In at least some cases, these structures can be
   provided with content that has a lesser size. R can behave in
   different ways in different circumstances.
-  * In some cases, the "extra" values will be populated with the
-    initial/default values for the mode.
-  * In other cases, the input will be **recycled**. That is, R will
-    keep looping through the input to fill out the result. For
-    example:
-    
-    ```R
+* In some cases, the "extra" values will be populated with the
+  initial/default values for the mode.
+* In other cases, the input will be **recycled**. That is, R will
+  keep looping through the input to fill out the result. For
+  example:
+  
+  ```R
 > rbind(16:18,5:9)
      [,1] [,2] [,3] [,4] [,5]
 [1,]   16   17   18   16   17
@@ -353,25 +353,31 @@ In v - x : longer object length is not a multiple of shorter object length
 Warning message:
 In rbind(16:18, 5:9) :
   number of columns of result is not a multiple of vector length (arg 1)
-    ```
-    
-      * In the case above, the matrix has five columns, but the first
-        row has only three values (`c(16,17,18)`) provided. R responds
-        by "recycling" the row over and over until the matrix is
-        padded out to the full five columns.
-      * In this case, R can pad out the row by recycling the input
-        twice, but it has "one left over" (`5 %% 3 == 2`). This upsets
-        it, and while it completes the recycling, it complains `number
-        of columns of result is not a multiple of vector length`
-      * If R was able to "cleanly" recycle the input, **you will be
-        given no warning**:
-        
-        ```R
+  ```
+  
+    * In the case above, the matrix has five columns, but the first
+      row has only three values (`c(16,17,18)`) provided. R responds
+      by "recycling" the row over and over until the matrix is
+      padded out to the full five columns.
+    * In this case, R can pad out the row by recycling the input
+      twice, but it has "one left over" (`5 %% 3 == 2`). This upsets
+      it, and while it completes the recycling, it complains `number
+      of columns of result is not a multiple of vector length`
+    * If R was able to "cleanly" recycle the input, **you will be
+      given no warning**:
+      
+      ```R
 > rbind(7:9, 20:28)
      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9]
 [1,]    7    8    9    7    8    9    7    8    9
 [2,]   20   21   22   23   24   25   26   27   28
-        ```
+      ```
+* In some cases, recycling will refuse to operate if the modulus is not met:
+  ```R
+> sprintf("%s %d %d", "test", 1:3, 10:11)
+Error in sprintf("%s %d %d", "test", 1:3, 10:11) : 
+  arguments cannot be recycled to the same length
+  ```
 
 #### Arrays ####
 
@@ -738,20 +744,20 @@ myFunc <- function( arg1, arg2 = 2) {
 Great scoping example from [O Beautiful Code][RScopeSearching]:
 ```R
 age <- 32 
-MyFunction = function() {
+MyFunction <- function() {
    age <- 22 
-   FromLocal <- function() { print( age + 1 ) } 
-   FromGlobal <- function() { print( age + 1 ) } 
-   NoSearch <-  function() { age <- 11; print( age + 1 ) } 
+   FromLocal <- function() { print(paste("Local", age + 1 )) } 
+   FromGlobal <- function() { print(paste("Global", age + 1 )) } 
+   NoSearch <-  function() { age <- 11; print(paste("NoSearch", age + 1 )) } 
    environment( FromGlobal ) <- .GlobalEnv 
    FromLocal() 
    FromGlobal() 
    NoSearch() 
 } 
 MyFunction() 
-[1] 23 
-[1] 33 
-[1] 12
+[1] "Local 23"
+[1] "Global 33"
+[1] "NoSearch 12"
 ```
 
 # Packages #
@@ -783,10 +789,39 @@ MyFunction()
   * `library` by default will insert packages at position [2] (highest
     level excepting `.GlobalEnv`), bumping down all other packages.
 
+# Text Handling #
+
+* `print()` = Basic STDOUT, includes newline
+  * Objects can define an internal print method, which will be invoked here
+    * Objects can also have a `toString()` method - I'm not sure if
+      that's how print gets implemented, or if it is different
+  * Assured output to terminal; Other methods are manipulation
+    methods, that will output in an interactive session but only if
+    not captured by another object.
+* `cat()` = concatenates character data into a single string
+  * Does not automatically include newlines, must terminate with "\n"
+    if desired
+* `format()` = fine-grained control over object representation.
+  * Significant digits, scientific notation, date/time
+* `sprintf()` = Exposed C function.
+  * Will implicitly loop! If multiple vectors are provided to multiple
+    bind locations, then they **must** be of the same modulus or
+    sprintf will fail to execute.
+
+  ```R
+> sprintf("%s %d", "test", 1:3)
+[1] "test 1" "test 2" "test 3"
+  ```
+* `prettyNum()` = Fairly extensive numeric formatting options
+
+
 # Random
 
 * `R.Version()` = show the software version information for current
   R session
+* There have been requests for
+  [emacs keybindings in RStudio][RstudioEmacs] but they are no plans
+  to implement it.
 
 ## <a name='serialization'></a>Serialization ##
 * `match.call()`
@@ -907,3 +942,4 @@ Not R *per se*, but these have been useful in making this document...
 [GitHubSanitization]: https://github.com/jch/html-pipeline/blob/master/lib/html/pipeline/sanitization_filter.rb
 [RScopeSearching]: http://blog.obeautifulcode.com/R/How-R-Searches-And-Finds-Stuff/
 [RScopeMap]: http://blog.obeautifulcode.com/R/How-R-Searches-And-Finds-Stuff/#map-of-the-world-follow-the-purple-line-road
+[RstudioEmacs]: https://support.rstudio.com/hc/communities/public/questions/200757977-Emacs-key-bindings-again-
