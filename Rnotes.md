@@ -12,8 +12,8 @@
     with parameter assignment, which also uses equals, for example
     with the 'nrow' parameter in `diag(1:2, nrow = 4)`
 * R is case-sensitive: b != B
-* Left methods and right methods may have the same name, but are
-  generally (always?) different functions.
+* <a name='setget'></a>Left methods and right methods may have the
+  same name, but are generally (always?) different functions.
   * Example: `dim()`
     * On the right(eg `myDims <- dim(myMatrix)`), will **get**
       the dimensionality of the query
@@ -119,7 +119,7 @@
 * Logical (Boolean)
   * default value `FALSE`
 * Special values
-  * `NA` = "Not Available"
+  * <a name='NA'></a>`NA` = "Not Available"
     * `is.na()` = boolean check
     * Apparently returned for "not possible", eg `as.integer("pineapple")`
     * Is the default value for some objects, such as matrices without
@@ -602,7 +602,7 @@ repeat {
 }
 ```
 
-# Functions #
+# <a name='functions'></a>Functions #
 
 * R will fail if you access a function with fewer arguments than it
   was defined with, unless the missing arguments have a default set:
@@ -635,6 +635,25 @@ repeat {
       this is probably not as dangerous as in a data frame, but
       likewise if the function changes over time a unique partial
       argument name might become non-unique later.
+  * <a name='dotdotdot'></a>`...` is used to pass arbitrary,
+    unspecified arguments onwards to sub-functions. That is,
+    specifying `...` in a function definition then allows use of `...`
+    again internally to pass on the "extra" arguments to internal
+    function calls:
+    
+    ```R
+myFuncTwo <- function( a = NULL, b = 2, ... ) {
+    myFunc( a, b, c = 4, ... )
+}
+    ```
+
+    * `...` is also used in "generic functions" for argument dispatch.
+    * `...` is used when the number of arguments in a call can not be
+      predicted, like in `paste()` or `cat()`, where 1-or-more
+      arguments are concatenated together.
+      * In these situation any "other" arguments *must* be named when
+        calling the function (otherwise they will be gathered into the
+        "general" arguments specified by the initial `...`).
 
 ```R
 myFunc <- function( arg1, arg2 = optionalDefaultValue) {
@@ -646,6 +665,94 @@ myFunc <- function( arg1, arg2 = 2) {
 }
 ```
 
+### <a name='scoping'></a>Symbol Scoping ###
+
+* ... is quite weird
+* Scott recommends: [How R Searches and Finds Stuff][RScopeSearching]
+* All objects in R reside in an **environment** (which is also an
+  object). Each environment has two<sup>*</sup> things:
+  1. A **frame**, which is a structure holding all the environment's
+     objects
+  2. The **owner** (parent) environment. <sup>*</sup>*The "Empty
+     Environment" is the ultimate top-level environment, it does not
+     have an owner.*
+* Environments can be manually created with `new.env()`
+* The owner can be found or changed with `parent.env( envObject )`
+* Your current environment is returned with `environment()`
+* `ls()` reports objects held by the current environment. You can use
+  `ls( name = envID )` to find objects in an arbitrary
+  environment. The name argument is flexible and can use an
+  environment object, name or search position.
+* The `assign()` function allows an object to be created in a
+  particular environment. Conversely, `get()` recovers objects, and
+  allows an environment to be specified.
+* There are some special environments:
+  * **.GlobalEnv*, which can be accessed with either `.GlobalEnv` (no
+    quotes) or `globalenv()`
+  * **R_EmptyEnv**, the top-level empty environment, accessed via
+    `emptyenv()`
+  * **base**, accessed via `baseenv()`
+* A package in R is associated with 3 environments. These are formally
+  represented with '<environment>:<package>', eg `namespace:stats`
+  1. The **package: environment** holds the "exported" objects you
+     presumably want from the package; Functions, constants, data,
+     etc.
+  2. The **namespace: environment** has the same (sort-of kind-of)
+     objects from the package environment, plus (optionally?) hidden
+     "support" objects
+  3. The **imports: environment** holds package dependencies; Other
+     packages that this package is going to need to be loaded as well.
+    * On CRAN, direct dependencies are shown under "Imports", while
+      indirect dependencies appear under "Depends". Apparently this
+      distinction can be consequential.
+    * The imports environments are enclosed by the namespace:base
+      environment.
+* *For the love of all that's holy this is confusingly complex*
+* A function "resides" in an environment, and runs in one. By
+  default these are the same, but the running environment can be
+  changed with the function's environment property.
+* Scoping and environments are important to R in order to facilitate
+  the location of named objects. Once R has an object in hand, it no
+  longer really cares what environment is associated with it. So
+  getting an environment from a (non-function) object is hard.
+* [Graphical view of search pattern][RScopeMap]. As far as I can tell,
+  the search is:
+  1. Try local environment
+  2. Recursively try enclosing environments. For package functions in
+     a package called myPackage, this would generally
+     be:
+    1. `namespace:myPackage`
+    2. `imports:myPackage`
+    3. `namespace:dependencyPackage` / `imports:dependencyPackage`
+       recursion for any packages that myPackage has specified as an
+       Imports dependency.
+  4. `namespace:base` if not found in package or Imports
+  5. `R_GlobalEnv`
+  6. `namespace:dependencyPackage` / `imports:dependencyPackage`
+     recursion for any packages that myPackage has specified as an
+     Depends dependency.
+* An object can be explicitly defined with `::`, eg `myPackage::myFunc`
+  * `::` works for exported objects; Three colons can by used for
+    internal objects, eg `myPackage:::someThing`
+
+Great scoping example from [O Beautiful Code][RScopeSearching]:
+```R
+age <- 32 
+MyFunction = function() {
+   age <- 22 
+   FromLocal <- function() { print( age + 1 ) } 
+   FromGlobal <- function() { print( age + 1 ) } 
+   NoSearch <-  function() { age <- 11; print( age + 1 ) } 
+   environment( FromGlobal ) <- .GlobalEnv 
+   FromLocal() 
+   FromGlobal() 
+   NoSearch() 
+} 
+MyFunction() 
+[1] 23 
+[1] 33 
+[1] 12
+```
 
 # Packages #
 * `a <- available.packages()` = puts list of all packages in `a`
@@ -671,6 +778,10 @@ myFunc <- function( arg1, arg2 = 2) {
     every session. Should not use quotes.
 * Rtools is needed for building packages in Windows.
   * Also want to `install.packages("devtools")` after downloading
+* `search()` lists the currently installed namespaces, and the
+  precedence order for when a symbol exists in two or more namespaces.
+  * `library` by default will insert packages at position [2] (highest
+    level excepting `.GlobalEnv`), bumping down all other packages.
 
 # Random
 
@@ -697,17 +808,33 @@ expression(z <- 3)
 * See also the [Data Import](#import) section above.
 
 ## Scott Wisdom ##
-* Ariella pointed out that identically-named functions from one
-  library will "overwrite" each other (most recently load wins).
+* <a name='masking'></a>Ariella pointed out that identically-named
+  functions from one library will "overwrite" each other (the most
+  recently loaded package wins).
   * R calls this "masking" and you can identify such situations with
-    `conflicts()`
+    `conflicts()` to show the function names and `find()` to show the
+    packages the function resides in. If it's a "gets" method, you may
+    need to use `help()` explicitly (rather than `?`) to call up
+    documentation.
+
+    ```R
+> conflicts()
+[1] "body<-"    "kronecker"
+> find("body<-")
+[1] "package:methods" "package:base"
+> help("body<-", package = "methods")
+No documentation for ‘body<-’ in specified packages and libraries:
+you could try ‘??body<-’
+    ```
+
   * Scott notes that the functions are not "overwritten"; All
     same-named functions still exist within the R session, and can all
     be accessed as long as you specify the package you want a particular from:
-    * `somePackage::someFunction( color = "lizzard" )` = access
-      someFunction() contained in the package somePackage.
-    * `get("someFunction", pos = "somePackage")( color = "lizzard" )`
-      = same as above, different syntax using the `get` function.
+
+    ```R
+somePackage::someFunction( color = "lizzard" )
+get("someFunction", pos = "somePackage")( color = "lizzard" )
+    ```
 
 ## Weird Things ##
 
@@ -778,3 +905,5 @@ Not R *per se*, but these have been useful in making this document...
 [githubsyntax]: https://help.github.com/articles/github-flavored-markdown/#syntax-highlighting
 [CodeBlockInList]: https://stackoverflow.com/questions/6235995/markdown-github-syntax-highlighting-of-code-block-as-a-child-of-a-list
 [GitHubSanitization]: https://github.com/jch/html-pipeline/blob/master/lib/html/pipeline/sanitization_filter.rb
+[RScopeSearching]: http://blog.obeautifulcode.com/R/How-R-Searches-And-Finds-Stuff/
+[RScopeMap]: http://blog.obeautifulcode.com/R/How-R-Searches-And-Finds-Stuff/#map-of-the-world-follow-the-purple-line-road
