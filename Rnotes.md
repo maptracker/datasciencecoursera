@@ -514,7 +514,7 @@ In rbind(16:18, 5:9) :
   version control systems for finer-granularity change tracking
 * Also see the [Serialization](#serialization) section below
 
-### <a name='connections></a>Connections ###
+### <a name='connections'></a>Connections ###
 
 * Includes files, but also file compression/decompression, URLs, pipes
 * `file()` = general utility read/write
