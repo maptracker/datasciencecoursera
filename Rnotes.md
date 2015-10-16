@@ -862,7 +862,7 @@ z <- 10
 f(3)
 ```
 Compare to Perl:
-```perl
+```Perl
 use strict;
 my $z = 10;
 
