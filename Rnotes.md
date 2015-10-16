@@ -885,14 +885,14 @@ class(es) of the passed argument.
   "stub" to set up a method as being S3 dispatched:
   
   ```R
-twiddle <- function( x ) {
-    UseMethod( "twiddle" )
-    # If x's first class is 'foo', then R will look for a function
-    # called "twiddle.foo"
-    # If a function can not be found, R will look for "twiddle.default"
-    # If it can't find either you get an error:
-    # no applicable method for 'twiddle' applied to an object of class ...
-}
+  twiddle <- function( x ) {
+      UseMethod( "twiddle" )
+      # If x's first class is 'foo', then R will look for a function
+      # called "twiddle.foo"
+      # If a function can not be found, R will look for "twiddle.default"
+      # If it can't find either you get an error:
+      # no applicable method for 'twiddle' applied to an object of class ...
+  }
   ```
   
   * Note that the "inherent" classes of an object can have methods,
@@ -967,16 +967,21 @@ speak.default <- function(animal, ...) {
     return
 }
 
+# Make some animals:
+
 pet <- "Fido"
 class(pet) <- "dog"
-# Dogs can not be vehement, so the flag is quietly ignored
+# Dogs behavior not affected by vehement, so the flag is quietly ignored
 speak(pet, vehemently = TRUE)
+[1] "Fido says Woof"
 
 bovine <- "Bessie"
 class(bovine) <- c("cow","singer")
 # Cows can be both alert and vehement
 # This cow is also a singer
 speak(bovine, alert = TRUE)
+[1] "Bessie sings La la la laaaaa!"
+[1] "Bessie says Moo who?"
 ```
 
 ## <a name='s4'></a>S4 OOP ##
