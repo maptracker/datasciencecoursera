@@ -185,11 +185,16 @@
     * **POSIXlt** = internal format representing dates and times as
       structures, such that sub-parts (eg month, seconds) can be
       accessed by name.
+      * If you see the error `$ operator is invalid for atomic
+        vectors` then your object may be in ct format and should be
+        transformed to lt.
     * `as.POSIXct()` and `as.POSIXlt()` can be used to convert back
       and forth.
-* `as.Date( myDate )` = Make a date object. The default `format` is
-  `"%Y-%m-%d"`, but can be set as something else.
+* `Time` class
 * Built-in utility methods:
+  * `as.Date( dateString )` = Make a date object. The default `format` is
+    `"%Y-%m-%d"`, but can be set as something else.
+  * `strptime( dateString)` = Format date output, similar to sprintf.
   * `Sys.Date()` = Current date for the system's locale.
   * `Sys.time()` = System's time in POSIXct format
   * `Sys.getlocale()` / `Sys.setlocale()` = get or set
@@ -198,6 +203,11 @@
   * `quarters( dateObject )` = Quarter name (eg "Q3")
   * `julian( dateObject, origin = dateObject)` = get the difference in
     days between two Dates.
+* Date math
+  * As long as the objects are the same classes, mathematical
+    operations can be done.
+  * Generates `difftime` time range objects.
+  * Can provide specific time zones to each object in the comparison
 
 ```R
 dt <- as.Date("1970-02-01")
@@ -839,6 +849,46 @@ MyFunction()
 [1] "NoSearch 12"
 ```
 
+This is a good example from a quiz:
+```R
+f <- function(x) {
+  g <- function(y) {
+    y + z
+  }
+  z <- 4
+  x + g(x)
+}
+z <- 10
+f(3)
+```
+Compare to Perl:
+```perl
+use strict;
+my $z = 10;
+
+# Prints 16:
+print &f(3);
+
+sub f {
+    my $x = shift;
+    my $g = sub {
+        my $y = shift;
+        # This closure has not encountered the local $z below
+        # So the closure "holds on to" the global value of $z defined above
+        return $y + $z;
+    };
+    
+    # This $z is not going to be used!
+    my $z = 4;
+    return $x + &{$g}($x);
+}
+```
+
+The difference here is that **R is not using references**. It is
+parsing everything by name. So when `g()` is evaluated inside `f()`,
+and it encounters an expression using `z`, it will start following the
+environment search pattern to find the "nearest" instance of z, which
+it quickly finds inside function f's environment.
 
 
 # Packages #
@@ -1112,7 +1162,7 @@ classed.*
 [1] "integer"
 ```
 
-#### Markdown Notes ####
+#### <a name='markdown'></a>Markdown Notes ####
 
 Not R *per se*, but these have been useful in making this document...
 * [Daring Fireball][daringfireball] - Original Markdown specification
@@ -1130,7 +1180,11 @@ Not R *per se*, but these have been useful in making this document...
         whitespace will be removed from each line.
       * Also, it seems like you need a newline before the first set of
         backticks, otherwise the code gets shoveled into an inline
-        block.
+        block. If you have newlines, they *must* be indented to the
+        list, too!
+        * If the indententing on a code-block-in-a-list is messed up,
+          it will mess up list nesting at weird points later in the
+          document. If you find
   * [HTML sanitization][GitHubSanitization] - You can use raw HTML
     tags, but GitHub will strip out many of the attributes for
     security. The link shows the WHITELIST structure used. Both

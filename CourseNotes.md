@@ -1,3 +1,7 @@
+General notes from the lectures.
+
+# The Data Scientist’s Toolbox
+
 ### Week 3
 
 * Types of Questions
@@ -39,7 +43,27 @@
 | Positive Predictive Value | ``Pr( Disease | PositiveTest )`` |
 | Negative Predictive Value | ``Pr( NotDisease | NegativeTest )`` |
 | Accuracy | ``Pr( CorrectTest )`` |
-  
+
+
+# R Programming #
+
+### Week 1 ###
+
+* R derived from S, now termed "S-PLUS" and owned by TIBCO
+* R created in 1991; v 1.0 2000; v3.0 2013
+  * Similar syntax to S, semantics are different
+  * Modular packaging (CRAN), graphics support
+  * FOSS.
+    * LOL. First freedom is indexed zero even though R indices start at 1.
+  * All objects are stored in physical memory
+* Packages
+  * CRAN has 4000+
+  * Bioconductor
+  * Random packages scattered around various websites
+  * Includes training packages
+
+
+
 [dukesuit]: http://news.sciencemag.org/2011/09/flawed-cancer-trial-duke-sparks-lawsuit
 [potti]: https://en.wikipedia.org/wiki/Anil_Potti
 [nsaunders]: https://nsaunders.wordpress.com/2012/07/23/we-really-dont-care-what-statistical-method-you-used/

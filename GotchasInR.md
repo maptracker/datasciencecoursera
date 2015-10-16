@@ -48,3 +48,6 @@
 * R makes a brave attempt at
   [Object Oriented Programming](./Rnotes.md#oop). It is a powerful
   feature but different from OOP in other languages.
+* GitHub Markdown is very touchy. Putting code blocks in lists can
+  cause disruption of all following markdown syntax if the
+  [rules](./Rnotes.md#markdown) are not carefully followed.
