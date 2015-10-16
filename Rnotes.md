@@ -151,12 +151,12 @@
         source vector:
         
         ```R
-> x <- c( one = 1, two = 2, four = 4)
-> x[c("one", "three")]
- one <NA> 
-   1   NA 
-> mode(x[c("one", "three")][[2]])
-[1] "numeric"
+        > x <- c( one = 1, two = 2, four = 4)
+        > x[c("one", "three")]
+         one <NA> 
+           1   NA 
+        > mode(x[c("one", "three")][[2]])
+        [1] "numeric"
         ```
     * `NaN` = Not a Number
       * `is.nan()`
@@ -171,18 +171,33 @@
     * Asking Scott about NULL seems to make him uncomfortable, like
       telling a parent that their child is eating paste.
 
-### Dates ###
+### Date and Time ###
 
 * `Date` class
-  * Uses POSIX standard relative to 1 Jan 1970, in days for dates and
-    seconds for times.
-  * Internally the date is a floating point value with zero at the
-    start of 1970
+  * Uses POSIX standard relative to 1 Jan 1970, resolved in days for
+    dates and seconds for times.
+    * Internally the date is an integer (?) value with zero at the
+      start of 1970
+      * *Times can capture sub-second resolution, not sure how that's
+        handled with an integer representation.*
+    * **POSIXct** = internal format that represents dates and times
+      numerically.
+    * **POSIXlt** = internal format representing dates and times as
+      structures, such that sub-parts (eg month, seconds) can be
+      accessed by name.
+    * `as.POSIXct()` and `as.POSIXlt()` can be used to convert back
+      and forth.
 * `as.Date( myDate )` = Make a date object. The default `format` is
   `"%Y-%m-%d"`, but can be set as something else.
 * Built-in utility methods:
   * `Sys.Date()` = Current date for the system's locale.
-    * `Sys.getlocale()` / `Sys.setlocale()` = get or set 
+  * `Sys.time()` = System's time in POSIXct format
+  * `Sys.getlocale()` / `Sys.setlocale()` = get or set
+  * `weekdays( dateObject )` = return the name of the day (eg "Sunday")
+  * `months( dateObject )` = return month name
+  * `quarters( dateObject )` = Quarter name (eg "Q3")
+  * `julian( dateObject, origin = dateObject)` = get the difference in
+    days between two Dates.
 
 ```R
 dt <- as.Date("1970-02-01")
@@ -213,18 +228,18 @@ v[b] # Will perform the same selection as two lines up
 * `$` = Access by name. Simple example with list:
 
   ```R
-myList <- list( dog = c(17,32,1), cat = c(7,5,2) )
-myList$dog      # A numeric vector representing the 'dog' column
-myList[[1]]     # Same as above, a vector from the dog column
-myList[["dog"]] # Same as above, accessing via name
-
-myList[1]       # a *list* of just the dog column. Includes the name
-myList["dog"]   # Same as above, accessing via name
-colName <- "dog"
-myList[colName] # Same as myList["dog"]
-
-myList[[1]][[2]] # Get single element in first row, second column
-myList[[c(1,2)]] # Same as above
+  myList <- list( dog = c(17,32,1), cat = c(7,5,2) )
+  myList$dog      # A numeric vector representing the 'dog' column
+  myList[[1]]     # Same as above, a vector from the dog column
+  myList[["dog"]] # Same as above, accessing via name
+  
+  myList[1]       # a *list* of just the dog column. Includes the name
+  myList["dog"]   # Same as above, accessing via name
+  colName <- "dog"
+  myList[colName] # Same as myList["dog"]
+  
+  myList[[1]][[2]] # Get single element in first row, second column
+  myList[[c(1,2)]] # Same as above
   ```
   
 * Matrix subsets that are 1 dimensional by default will return
@@ -232,19 +247,19 @@ myList[[c(1,2)]] # Same as above
   = FALSE`. Examples:
   
   ```R
-x <- matrix( 11:22, nrow = 3, dimnames = list
-  ( c("Alice","Bob","Chris"),
-    c("Alpha","Beta","Gamma","Delta") ) )
-x[[10]]        # Get the 10th element
-x[ 2, ]        # Get the second row
-x[ "Bob" ]     # second row by name
-x[ , 3]        # Third column
-x[ , "Gamma" ] # Third column by name
-x[ 2,1 ]       # Element in second row, first column *as a vector*
-x[ 2,1, drop = FALSE ] # As above, but now returns a 1x1 matrix
-x[ c(2,3),c(2,4) ]     # Slice of rows 2+3 / cols 2+4
-# Matrices do not use '$' for named accession:
-x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
+  x <- matrix( 11:22, nrow = 3, dimnames = list
+    ( c("Alice","Bob","Chris"),
+      c("Alpha","Beta","Gamma","Delta") ) )
+  x[[10]]        # Get the 10th element
+  x[ 2, ]        # Get the second row
+  x[ "Bob" ]     # second row by name
+  x[ , 3]        # Third column
+  x[ , "Gamma" ] # Third column by name
+  x[ 2,1 ]       # Element in second row, first column *as a vector*
+  x[ 2,1, drop = FALSE ] # As above, but now returns a 1x1 matrix
+  x[ c(2,3),c(2,4) ]     # Slice of rows 2+3 / cols 2+4
+  # Matrices do not use '$' for named accession:
+  x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
   ```
 
 * Missing values can be found with `is.na()`, and exclued with `!is.na()`.
@@ -252,15 +267,15 @@ x[ c("Bob","Chris"), c("Beta","Delta") ] # Same slice as above
     value in any column.
 
   ```R
-> x <- data.frame( color = c("blue", "red", NA, "yellow"),
-                   weight = c(13.2, NA, NA, 19.9))
-> !is.na(x$color)
-[1]  TRUE  TRUE FALSE  TRUE
-> ccx <- complete.cases(x)
-> x[ ccx, ]
-   color weight
-1   blue   13.2
-4 yellow   19.9
+  > x <- data.frame( color = c("blue", "red", NA, "yellow"),
+                     weight = c(13.2, NA, NA, 19.9))
+  > !is.na(x$color)
+  [1]  TRUE  TRUE FALSE  TRUE
+  > ccx <- complete.cases(x)
+  > x[ ccx, ]
+     color weight
+  1   blue   13.2
+  4 yellow   19.9
   ```
 
 #### Vectors ####
@@ -380,13 +395,13 @@ In v - x : longer object length is not a multiple of shorter object length
   example:
   
   ```R
-> rbind(16:18,5:9)
-     [,1] [,2] [,3] [,4] [,5]
-[1,]   16   17   18   16   17
-[2,]    5    6    7    8    9
-Warning message:
-In rbind(16:18, 5:9) :
-  number of columns of result is not a multiple of vector length (arg 1)
+  > rbind(16:18,5:9)
+       [,1] [,2] [,3] [,4] [,5]
+  [1,]   16   17   18   16   17
+  [2,]    5    6    7    8    9
+  Warning message:
+  In rbind(16:18, 5:9) :
+    number of columns of result is not a multiple of vector length (arg 1)
   ```
   
     * In the case above, the matrix has five columns, but the first
@@ -401,16 +416,16 @@ In rbind(16:18, 5:9) :
       given no warning**:
       
       ```R
-> rbind(7:9, 20:28)
-     [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9]
-[1,]    7    8    9    7    8    9    7    8    9
-[2,]   20   21   22   23   24   25   26   27   28
-      ```
+      > rbind(7:9, 20:28)
+           [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9]
+      [1,]    7    8    9    7    8    9    7    8    9
+      [2,]   20   21   22   23   24   25   26   27   28
+            ```
 * In some cases, recycling will refuse to operate if the modulus is not met:
   ```R
-> sprintf("%s %d %d", "test", 1:3, 10:11)
-Error in sprintf("%s %d %d", "test", 1:3, 10:11) : 
-  arguments cannot be recycled to the same length
+  > sprintf("%s %d %d", "test", 1:3, 10:11)
+  Error in sprintf("%s %d %d", "test", 1:3, 10:11) : 
+    arguments cannot be recycled to the same length
   ```
 
 #### Arrays ####
@@ -423,27 +438,27 @@ Error in sprintf("%s %d %d", "test", 1:3, 10:11) :
 * Functionally will be utilized as vectors, but the labels provide
   human interpretation (so you don't forget what 4 represents).
 * Used in modeling methods like `lm()` and `glm()`
-
+  
   ```R
-> x <- factor(c("peach", "pear", "marmoset", "peach", "peach"))
-> typeof(x)
-[1] "integer"
-> str(x)
- Factor w/ 3 levels "marmoset","peach",..: 2 3 1 2 2
+  > x <- factor(c("peach", "pear", "marmoset", "peach", "peach"))
+  > typeof(x)
+  [1] "integer"
+  > str(x)
+   Factor w/ 3 levels "marmoset","peach",..: 2 3 1 2 2
   ```
-
+  
   * Note that internally while your order is maintained the integer
     assignment is made independently by R; peach is 2, even though it
     was "first".
   * `levels(x)` = reports the factor names as ordered by integer value
   * If you want to set the factor order explicitly, the `levels`
     argument can be used:
-
+    
     ```R
     x <- factor(c("peach", "pear", "marmoset", "peach", "peach"),
                  levels = c("peach", "pear", "marmoset"))
     ```
-
+    
 * The order of levels is important in some modeling because the
     first level is taken as baseline.
 * `table()` = simple contingency table of the factor
@@ -659,13 +674,13 @@ repeat {
     can be passed as the second argument and "ncol" as the third:
     
     ```R
-# From the documentation:
-# matrix(data = NA, nrow = 1, ncol = 1, byrow = FALSE,
-#        dimnames = NULL)
-> x <- matrix(ncol = 3, 1:6, nrow = 2 )
-> y <- matrix(1:6, 2, 3)
-> identical(x,y)
-[1] TRUE
+    # From the documentation:
+    # matrix(data = NA, nrow = 1, ncol = 1, byrow = FALSE,
+    #        dimnames = NULL)
+    > x <- matrix(ncol = 3, 1:6, nrow = 2 )
+    > y <- matrix(1:6, 2, 3)
+    > identical(x,y)
+    [1] TRUE
     ```
     
   * This is crazy goofy and looks prone to all kinds of hard-to-catch
@@ -682,9 +697,9 @@ repeat {
     function calls:
     
     ```R
-myFuncTwo <- function( a = NULL, b = 2, ... ) {
-    myFunc( a, b, c = 4, ... )
-}
+    myFuncTwo <- function( a = NULL, b = 2, ... ) {
+        myFunc( a, b, c = 4, ... )
+    }
     ```
 
     * `...` is also used in "generic functions" for argument dispatch.
@@ -779,20 +794,21 @@ myFunc <- function( arg1, arg2 = 2) {
   caller parameter:
 
   ```R
-make.dice <- function (sides) {
-    dice <- function( rolls ) {
-        # runif() is the uniform distribution = "random number"
-        # My attempt at generating random numbers:
-        # floor(sides * runif(1:rolls)) + 1
-        # Scott's suggestion for a more R-ish way:
-        sample.int(n = sides, size = rolls, replace = TRUE)
-    }
-    dice # Return the closure
-}
-sixSided <- make.dice(6)
-sixSided(5)
-[1] 1 3 6 3 2
-```
+  make.dice <- function (sides) {
+      dice <- function( rolls ) {
+          # runif() is the uniform distribution = "random number"
+          # My attempt at generating random numbers:
+          # floor(sides * runif(1:rolls)) + 1
+          # Scott's suggestion for a more R-ish way:
+          sample.int(n = sides, size = rolls, replace = TRUE)
+      }
+      dice # Return the closure
+  }
+  sixSided <- make.dice(6)
+  sixSided(5)
+  [1] 1 3 6 3 2
+  ```
+
   * Closures are useful for operations that take parameterized
     functions as input. For example, `optimize()` finds the minimum or
     maximum of a function within a range. A closure allows some
@@ -1008,9 +1024,10 @@ speak(bovine, alert = TRUE)
     sprintf will fail to execute.
 
   ```R
-> sprintf("%s %d", "test", 1:3)
-[1] "test 1" "test 2" "test 3"
+  > sprintf("%s %d", "test", 1:3)
+  [1] "test 1" "test 2" "test 3"
   ```
+
 * `prettyNum()` = Fairly extensive numeric formatting options
 
 # Probability #
@@ -1036,13 +1053,14 @@ speak(bovine, alert = TRUE)
   R code") in many other languages:
   
   ```R
-> myExp <- parse(text = "z <- 3")
-> myExp
-expression(z <- 3)
-> eval(myExp)
-> z
-[1] 3
+  > myExp <- parse(text = "z <- 3")
+  > myExp
+  expression(z <- 3)
+  > eval(myExp)
+  > z
+  [1] 3
   ```
+
 * See also the [Data Import](#import) section above.
 
 ## Scott Wisdom ##
@@ -1056,13 +1074,13 @@ expression(z <- 3)
     documentation.
 
     ```R
-> conflicts()
-[1] "body<-"    "kronecker"
-> find("body<-")
-[1] "package:methods" "package:base"
-> help("body<-", package = "methods")
-No documentation for ‘body<-’ in specified packages and libraries:
-you could try ‘??body<-’
+    > conflicts()
+    [1] "body<-"    "kronecker"
+    > find("body<-")
+    [1] "package:methods" "package:base"
+    > help("body<-", package = "methods")
+    No documentation for ‘body<-’ in specified packages and libraries:
+    you could try ‘??body<-’
     ```
 
   * Scott notes that the functions are not "overwritten"; All
@@ -1070,8 +1088,8 @@ you could try ‘??body<-’
     be accessed as long as you specify the package you want a particular from:
 
     ```R
-somePackage::someFunction( color = "lizzard" )
-get("someFunction", pos = "somePackage")( color = "lizzard" )
+    somePackage::someFunction( color = "lizzard" )
+    get("someFunction", pos = "somePackage")( color = "lizzard" )
     ```
 
 ## Weird Things ##
@@ -1094,22 +1112,8 @@ classed.*
 [1] "integer"
 ```
 
-## Course Notes ##
-* R derived from S, now termed "S-PLUS" and owned by TIBCO
-* R created in 1991; v 1.0 2000; v3.0 2013
-  * Similar syntax to S, semantics are different
-  * Modular packaging (CRAN), graphics support
-  * FOSS.
-    * LOL. First freedom is indexed zero even though R indices start at 1.
-  * All objects are stored in physical memory
-* Packages
-  * CRAN has 4000+
-  * Bioconductor
-  * Random packages scattered around various websites
-  * Includes training packages
-
-
 #### Markdown Notes ####
+
 Not R *per se*, but these have been useful in making this document...
 * [Daring Fireball][daringfireball] - Original Markdown specification
 * [Internal document anchors][NamedAnchors] - `<a
@@ -1120,10 +1124,13 @@ Not R *per se*, but these have been useful in making this document...
     [syntax highlighting][githubsyntax]. Unfortunately this
     [does not work](https://stackoverflow.com/a/25058886) with inline
     code blocks.
-    * [Code blocks in lists][CodeBlockInList] are quite finicky. The
-      leading and trailing backticks need to be at the same indent as
-      the list item content. Also, it seems like you need a newline
-      before the first set of backticks.
+    * [Code blocks in lists][CodeBlockInList] are quite finicky.
+      * The leading and trailing backticks need to be at the same
+        indent as the list item content. If you don't do this, leading
+        whitespace will be removed from each line.
+      * Also, it seems like you need a newline before the first set of
+        backticks, otherwise the code gets shoveled into an inline
+        block.
   * [HTML sanitization][GitHubSanitization] - You can use raw HTML
     tags, but GitHub will strip out many of the attributes for
     security. The link shows the WHITELIST structure used. Both
