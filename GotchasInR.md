@@ -42,3 +42,9 @@
 * `sprintf()` can use vectors as bind arguments, producing a character
   vector as output. It will [recycle](./Rnotes.md#recycling) if
   needed, but only if all vector arguments are of the same modulus.
+* The `.` and `_` characters are semi-reserved. You *could* use them
+  in varaible names if you wanted to, but there are
+  [reasons not to](./Rnotes.md#syntax)
+* R makes a brave attempt at
+  [Object Oriented Programming](./Rnotes.md#oop). It is a powerful
+  feature but different from OOP in other languages.

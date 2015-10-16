@@ -13,7 +13,7 @@
     with the 'nrow' parameter in `diag(1:2, nrow = 4)`
 * R is case-sensitive: b != B
 * <a name='setget'></a>Left methods and right methods may have the
-  same name, but are generally (always?) different functions.
+  same name, but are generally different functions.
   * Example: `dim()`
     * On the right(eg `myDims <- dim(myMatrix)`), will **get**
       the dimensionality of the query
@@ -24,6 +24,23 @@
         with the "<-" arrow tacked on), which R calls a "replacement
         method". Scott calls this "dim gets"
       * `?dim` will show you help for *both* methods
+  * Not all functions follow this paradigm; For example, finding the
+    locale of the current system is broken into the separate functions
+    `Sys.getlocale()` and `Sys.setlocale()`
+
+### <a name='syntax'></a>Syntax Considerations ###
+
+* `.` (period) has - *sometimes* - special meaning. Sometimes it does
+  not. If you wish, you can use it as an arbitrary character in a
+  variable name. This is probably not a good idea, though, as it can
+  cause confusion with [S3 OOP classes](#s3).
+* `_` (underscore) has no special meaning in R, and can be used in
+  variable names. *However*, it has (had?) special meaning in SAS,
+  where it served as an alias for `<-`. This means that use of
+  underscores can make your code incompatible in SAS. Probably best to
+  avoid usage.
+  * The emacs ESS major mode [ESS][ESS] will irritatingly convert `_`
+    to ` <- ` automatically. Probably can override somewhere.
 
 # Non-obvious Math Operators #
 
@@ -62,7 +79,7 @@
   * names & dimnames, dimensions (matrices, arrays), class, length, etc
   * user-defined
 
-#### Object Utility Methods ####
+### Object Utility Methods ###
 
 * `str()` = "Structure"
   * Provides a verbose report of what the object is and what
@@ -88,7 +105,7 @@
 * `as.SOMETHING()` = coerce / cast an object from one mode to another
   * eg `as.integer()`
 
-#### Atomic Classes ####
+### Atomic Classes ###
 
 * Character
   * default value `""` (empty string)
@@ -153,6 +170,23 @@
       be a sign of a latent malignant AI - must watch carefully.
     * Asking Scott about NULL seems to make him uncomfortable, like
       telling a parent that their child is eating paste.
+
+### Dates ###
+
+* `Date` class
+  * Uses POSIX standard relative to 1 Jan 1970, in days for dates and
+    seconds for times.
+  * Internally the date is a floating point value with zero at the
+    start of 1970
+* `as.Date( myDate )` = Make a date object. The default `format` is
+  `"%Y-%m-%d"`, but can be set as something else.
+* Built-in utility methods:
+  * `Sys.Date()` = Current date for the system's locale.
+    * `Sys.getlocale()` / `Sys.setlocale()` = get or set 
+
+```R
+dt <- as.Date("1970-02-01")
+```
 
 ## Vectors, Matrices and Data Frames ##
 
@@ -740,6 +774,35 @@ myFunc <- function( arg1, arg2 = 2) {
 * An object can be explicitly defined with `::`, eg `myPackage::myFunc`
   * `::` works for exported objects; Three colons can by used for
     internal objects, eg `myPackage:::someThing`
+* Lexical scoping works allows construction of closures. In the
+  example below, "make.dice" returns a function that "remembers" the
+  caller parameter:
+
+  ```R
+make.dice <- function (sides) {
+    dice <- function( rolls ) {
+        # runif() is the uniform distribution = "random number"
+        # My attempt at generating random numbers:
+        # floor(sides * runif(1:rolls)) + 1
+        # Scott's suggestion for a more R-ish way:
+        sample.int(n = sides, size = rolls, replace = TRUE)
+    }
+    dice # Return the closure
+}
+sixSided <- make.dice(6)
+sixSided(5)
+[1] 1 3 6 3 2
+```
+  * Closures are useful for operations that take parameterized
+    functions as input. For example, `optimize()` finds the minimum or
+    maximum of a function within a range. A closure allows some
+    parameters to be fixed while varying only the arguments being
+    "scanned" by optimize.
+  * Scott recommends limiting usage of closures to where they're
+    really needed, because they make following code flow more
+    difficult.
+* The scoping paradigm is apparently why R objects must all be kept in
+  memory, as opposed to cached to disk.
 
 Great scoping example from [O Beautiful Code][RScopeSearching]:
 ```R
@@ -760,7 +823,10 @@ MyFunction()
 [1] "NoSearch 12"
 ```
 
+
+
 # Packages #
+
 * `a <- available.packages()` = puts list of all packages in `a`
 * `head(rownames(a), 3)`
 * `install.packages("<PACKAGE_NAME_HERE>")` = install the package from CRAN
@@ -789,6 +855,134 @@ MyFunction()
   * `library` by default will insert packages at position [2] (highest
     level excepting `.GlobalEnv`), bumping down all other packages.
 
+# <a name='oop'></a>Object Oriented Programming #
+
+R had OOP "cobbled on" late in its history. It actually has been added
+*twice*; When you see references to "S3" or "S4", they are referring
+to OOP paradigms from SAS 3 and SAS 4, which are quite different. You
+may use both simultaneously, but it is highly disadvised.
+
+## <a name='s3'></a>S3 OOP ##
+
+* S3 is based on SAS 3 OOP
+  * You get it "for free", no need to load additional libraries
+  * CONS: Kludgy, weird implementation. Aspects of the syntax are
+    oddly defined and may be difficult to predict behavior.
+  * PROS: Simple but still powerful. Scott says it is much harder to
+    maintain code when using the S4 paradigm; Changes tend to require
+    propogation across all dependent scripts and libraries, whereas
+    changes in S3 are less likely to break reliant code.
+* The `.` character has a special role in S3 - It defines
+  class-specific dispatch methods (see below)
+
+#### Importance of Classes in S3 ####
+
+Classes play a central role in S3. They are used for "method
+dispatch", where a function can call different code depending on the
+class(es) of the passed argument.
+    
+* `UseMethod( "baseMethodName" )` = Generally (always?) used inside a
+  "stub" to set up a method as being S3 dispatched:
+  
+  ```R
+twiddle <- function( x ) {
+    UseMethod( "twiddle" )
+    # If x's first class is 'foo', then R will look for a function
+    # called "twiddle.foo"
+    # If a function can not be found, R will look for "twiddle.default"
+    # If it can't find either you get an error:
+    # no applicable method for 'twiddle' applied to an object of class ...
+}
+  ```
+  
+  * Note that the "inherent" classes of an object can have methods,
+    too. So you could make a method "twiddle.logical" or
+    "twiddle.double".
+* `NextMethod()` = Dispatches functions on the next class (if any)
+  held by the object.
+  * Should be called from inside the function *that was called by* the
+    previous UseMethod/NextMethod block.
+  * Keep in mind that return values from NextMethod will end up
+    "trapped" inside the previous calling function unless you do
+    something with them. NextMethod would presumably be most useful
+    for configuring aspects of the analysis done by the "primary"
+    class' function.
+* `analyze.info.detail` = This function could be dispatched by either
+  `analyze.info()` on a "detail" object, or by `analyze()` on an
+  "info.detail" object.
+
+```R
+speak <- function( ... ) {
+    # This is the "dispatcher" function. It will look for a function named
+    # "speak.<firstClassName>" or "speak.default"
+    UseMethod( "speak" )
+}
+saySomething <- function (animal, what) {
+    sprintf("%s says %s", animal, what)
+}
+speak.cow <- function(animal, vehemently = FALSE, alert = FALSE, ... ) {
+    # speak() method for class "cow"
+    # First see if there are any other classes to deal with:
+    NextMethod( )
+    what <- if (vehemently) {
+        if (alert) {
+            # Vehemently alert!
+            "I said MOO WHO?!?!"
+        } else {
+            "MOOOO!!!"
+        }
+    } else if (alert) {
+        "Moo who?"
+    } else {
+        "Moo"
+    }
+    saySomething( animal, what );
+}
+speak.dog <- function(animal, alert = FALSE, ...) {
+    # speak() method for class "dog"
+    # First see if there are any other classes to deal with:
+    NextMethod( )
+    what <- if (alert) {
+        "BARK BARK BARK!!!"
+    } else {
+        "Woof"
+    }
+    saySomething( animal, what );
+}
+speak.singer <- function(animal, ...) {
+    # This method is designed to be called as a secondary (NextMethod)
+    # function to the primary class. It is called before the primary
+    # class' dispatched function returns. If we return a value here,
+    # it will be quietly "absorbed" inside the primary block, and we
+    # will never see it. So we print the value to STDOUT here so the
+    # cow can sing.
+    print(sprintf("%s sings La la la laaaaa!", animal))
+    return
+}
+speak.default <- function(animal, ...) {
+    # Stay silent. This is needed to catch NextMethod calls when the
+    # class stack has no more classes available.  To avoid having NULL
+    # returned and cluttering up our output, we explicitly return
+    # https://stackoverflow.com/a/25719114
+    return
+}
+
+pet <- "Fido"
+class(pet) <- "dog"
+# Dogs can not be vehement, so the flag is quietly ignored
+speak(pet, vehemently = TRUE)
+
+bovine <- "Bessie"
+class(bovine) <- c("cow","singer")
+# Cows can be both alert and vehement
+# This cow is also a singer
+speak(bovine, alert = TRUE)
+```
+
+## <a name='s4'></a>S4 OOP ##
+
+* 
+
 # Text Handling #
 
 * `print()` = Basic STDOUT, includes newline
@@ -814,6 +1008,9 @@ MyFunction()
   ```
 * `prettyNum()` = Fairly extensive numeric formatting options
 
+# Probability #
+
+* `runif()` = The uniform distribution
 
 # Random
 
@@ -824,6 +1021,7 @@ MyFunction()
   to implement it.
 
 ## <a name='serialization'></a>Serialization ##
+
 * `match.call()`
   * Returns a 'language' object
 * `parse()` can be used to process a character string to an R
@@ -943,3 +1141,4 @@ Not R *per se*, but these have been useful in making this document...
 [RScopeSearching]: http://blog.obeautifulcode.com/R/How-R-Searches-And-Finds-Stuff/
 [RScopeMap]: http://blog.obeautifulcode.com/R/How-R-Searches-And-Finds-Stuff/#map-of-the-world-follow-the-purple-line-road
 [RstudioEmacs]: https://support.rstudio.com/hc/communities/public/questions/200757977-Emacs-key-bindings-again-
+[ESS]: http://ess.r-project.org/
