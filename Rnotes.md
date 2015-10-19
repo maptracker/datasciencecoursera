@@ -35,18 +35,41 @@
   variable name. This is probably not a good idea, though, as it can
   cause confusion with [S3 OOP classes](#s3).
 * `_` (underscore) has no special meaning in R, and can be used in
-  variable names. *However*, it has (had?) special meaning in SAS,
-  where it served as an alias for `<-`. This means that use of
-  underscores can make your code incompatible in SAS. Probably best to
-  avoid usage.
+  variable names. *However*, it has (had?) special meaning in S, where
+  it served as an alias for `<-`. This means that use of underscores
+  can make your code incompatible in S. Probably best to avoid usage.
   * The emacs ESS major mode [ESS][ESS] will irritatingly convert `_`
     to ` <- ` automatically. Probably can override somewhere.
+* `<<-` is a special assignment vector that will bypass normal
+  [scope](#scoping) in some circumstances and assign the global
+  variable
+* `:::` is used to access [internally scoped](#internalscope) variables
+* Backticks allow recovery of function objects that would otherwise
+  insist on be function-y eg `` `if` ``
+* There are a few "naked" operators, like `next` or `break`, but
+  nearly all other functions should include parentheses: Using
+  `return` will return the *function* return; You probably wanted to
+  `return()`.
 
-# Non-obvious Math Operators #
+#### Non-obvious Operators ####
 
 * `%%` Modulus
 * `%/%` Integer division (no decimal / remainder)
 * `%*%` Matrix multiplication
+* `&` / `|` = Vectorized logical AND / OR. `c(T,F,T) & c(F,F,T)` =
+  `[1] FALSE FALSE TRUE`. That is, it cycles over the elements and
+  performs the requested boolean logic.
+  * `&&` / `||` = I still have not quite figured out what this
+    does. They're boolean operations that cascade in some way.
+
+#### References and Helpful Tools ####
+
+* [Advanced R][AdvancedR] = Hadley Wickham's R site
+* [The R Inferno][Rinferno] : A fairly deep look at some of the issues
+  in R
+* `library(codetools)` / `?codetools` : debugging utilities
+  * `checkUsage( myFunction )` : provides some feedback on potential
+    issues, like undeclared variables.
 
 # Objects #
 
@@ -658,7 +681,16 @@ while (i < 10) {
 * `repeat` is basically `while( TRUE )`
 * `break` will exit any of the loop structures
 * `next` will continue the loop to the next iteration
-* `return` exits a function with a return value
+* `return()` exits a function with a return value.
+  * **NOTE THE PARENTHESES** - repeat, break and next can be used
+    "naked", but if you try to just `return` then you'll return the
+    function named "return" (if it's the last line in the function) or
+    not return at all (if it's in the middle).
+* `invisible( return(something) )` - invisible is used when you want
+  to return a value without having it print out if it's not
+  captured. That is, it's an aesthetic function to help avoid
+  cluttering your terminal output.
+
 
 ```R
 repeat {
@@ -748,6 +780,10 @@ myFunc <- function( arg1, arg2 = 2) {
   `ls( name = envID )` to find objects in an arbitrary
   environment. The name argument is flexible and can use an
   environment object, name or search position.
+* `rm()` removes objects from an environment
+  * Ron recommends that scripts begin with `rm(list=ls())`. This will
+    clear all variables held by the current environment and assure
+    that you're starting with a clean slate.
 * The `assign()` function allows an object to be created in a
   particular environment. Conversely, `get()` recovers objects, and
   allows an environment to be specified.
@@ -797,8 +833,9 @@ myFunc <- function( arg1, arg2 = 2) {
      recursion for any packages that myPackage has specified as an
      Depends dependency.
 * An object can be explicitly defined with `::`, eg `myPackage::myFunc`
-  * `::` works for exported objects; Three colons can by used for
-    internal objects, eg `myPackage:::someThing`
+  * <a name='internalscope'></a> `::` works for exported objects;
+    Three colons can by used for internal objects, eg
+    `myPackage:::someThing`
 * Lexical scoping works allows construction of closures. In the
   example below, "make.dice" returns a function that "remembers" the
   caller parameter:
@@ -829,6 +866,11 @@ myFunc <- function( arg1, arg2 = 2) {
     difficult.
 * The scoping paradigm is apparently why R objects must all be kept in
   memory, as opposed to cached to disk.
+* `<<-` is a special gets method that will assign a variable
+  "normally" if it can find it in the parent search path, but if not
+  will assign the variable in the global scope.
+  * Docs say this is normally only used in functions. Scott reacted
+    with alarm when I mentioned that Ron had told me about it.
 
 Great scoping example from [O Beautiful Code][RScopeSearching]:
 ```R
@@ -925,12 +967,13 @@ it quickly finds inside function f's environment.
 
 R had OOP "cobbled on" late in its history. It actually has been added
 *twice*; When you see references to "S3" or "S4", they are referring
-to OOP paradigms from SAS 3 and SAS 4, which are quite different. You
-may use both simultaneously, but it is highly disadvised.
+to OOP paradigms from versions 3 / 4 of the [S language][S], which are
+quite different. You may use both simultaneously, but it is highly
+disadvised.
 
 ## <a name='s3'></a>S3 OOP ##
 
-* S3 is based on SAS 3 OOP
+* S3 is based on the [1988 version of S][sHistory]
   * You get it "for free", no need to load additional libraries
   * CONS: Kludgy, weird implementation. Aspects of the syntax are
     oddly defined and may be difficult to predict behavior.
@@ -976,6 +1019,9 @@ class(es) of the passed argument.
 * `analyze.info.detail` = This function could be dispatched by either
   `analyze.info()` on a "detail" object, or by `analyze()` on an
   "info.detail" object.
+
+Scott indicates that the use of NextMethod below is highly unusual. I
+do not think I am comprehending it properly.
 
 ```R
 speak <- function( ... ) {
@@ -1023,14 +1069,14 @@ speak.singer <- function(animal, ...) {
     # will never see it. So we print the value to STDOUT here so the
     # cow can sing.
     print(sprintf("%s sings La la la laaaaa!", animal))
-    return
+    return()
 }
 speak.default <- function(animal, ...) {
     # Stay silent. This is needed to catch NextMethod calls when the
     # class stack has no more classes available.  To avoid having NULL
     # returned and cluttering up our output, we explicitly return
     # https://stackoverflow.com/a/25719114
-    return
+    return()
 }
 
 # Make some animals:
@@ -1050,9 +1096,52 @@ speak(bovine, alert = TRUE)
 [1] "Bessie says Moo who?"
 ```
 
+* Scott recommends testing auto-dispatched methods with a direct call
+  to them (`speak.singer("Oscar")`) to verify that they're behaving as
+  anticipated.
+
 ## <a name='s4'></a>S4 OOP ##
 
-* 
+* S4 is recommended when
+  [developing with Bioconductor pacakages][s4bioconductor].
+
+
+# <a name='dataobject'></a>Programmer-like Objects #
+
+That is, structuring complex objects as one might in other
+langauages. Scott recommends using lists, but warns that it becomes
+unweildy for large amounts of data.
+
+```R
+fido <- list( name = "Fido", toys = c("ball", "stick"), color = "brown")
+butch <- list( name = "Butch", food = c("cats", "small children"), friendly = F)
+# Yeesh - fido = fido.
+kennel <- list( dogs = list(fido = fido, butch = butch), clean = TRUE)
+kennel
+$dogs
+$dogs$fido
+$dogs$fido$name
+[1] "Fido"
+
+$dogs$fido$toys
+[1] "ball"  "stick"
+
+$dogs$fido$color
+[1] "brown"
+
+$dogs$butch
+$dogs$butch$name
+[1] "Butch"
+
+$dogs$butch$food
+[1] "cats"           "small children"
+
+$dogs$butch$friendly
+[1] FALSE
+
+$clean
+[1] TRUE
+```
 
 # Text Handling #
 
@@ -1144,6 +1233,35 @@ speak(bovine, alert = TRUE)
 
 ## Weird Things ##
 
+#### <a name='aliases'></a>Aliases, Aliases, Aliases ####
+
+R seems very fond of aliases. These are commands or variables that
+have different names but do the same thing. It also "figures out what
+you really want" in some cases. Here are the examples I've been able to
+find:
+
+* Mode `double` is the same as mode `numeric`
+* `isTRUE(x)` is an abbreviation of `identical(TRUE, x)`
+* When a function is on the left side, it's called the "replacement
+  form", and even though you'd write it as `foo()`, it's really
+  `"foo<-"()`:
+  
+  ```R
+  y <- "Red"
+  x <- "Blue"
+  attr(y, "name") <- "Rachel"
+  x <- "attr<-"(x, "name", "Barry")
+  
+  x
+  [1] "Blue"
+  attr(,"name")
+  [1] "Barry"
+   y
+  [1] "Red"
+  attr(,"name")
+  [1] "Rachel"
+  ```
+
 #### <a name='dataclassweird'></a>data.class() vs class() ####
 
 R documentation: *For compatibility reasons ...  When ‘x’ is ‘integer’,
@@ -1208,3 +1326,8 @@ Not R *per se*, but these have been useful in making this document...
 [RScopeMap]: http://blog.obeautifulcode.com/R/How-R-Searches-And-Finds-Stuff/#map-of-the-world-follow-the-purple-line-road
 [RstudioEmacs]: https://support.rstudio.com/hc/communities/public/questions/200757977-Emacs-key-bindings-again-
 [ESS]: http://ess.r-project.org/
+[Rinferno]: http://www.burns-stat.com/pages/Tutor/R_inferno.pdf
+[AdvancedR]: http://adv-r.had.co.nz/
+[s4bioconductor]: https://stackoverflow.com/questions/3602154/when-does-it-pay-off-to-use-s4-methods-in-r-programming
+[S]: https://en.wikipedia.org/wiki/S_%28programming_language%29
+[sHistory]: http://ect.bell-labs.com/sl/S/history.html

@@ -1,4 +1,10 @@
 
+* Unlike most programming languages, R does not really have (exposed)
+  references. Variables are passed around as names, and are evaluated
+  on-the-fly by
+  [searching a complex environment](./Rnotes.md#scoping).
+  * You can get help on many (all?) operators by quoting them (since
+    they are kind-of sort-of just names), eg `?"&"` or `?"<-"`
 * [Set and get](./Rnotes.md#setget) methods are generally written the
   same but are different underlying code.
 * Be alert for [recycling](./Rnotes.md#recycling). This is where R
@@ -6,7 +12,18 @@
   to make sure it has enough entries (like rectangularizing a
   matrix). You will be warned that recycling happens only if there is
   a modulus.
-* The modulus operator is `%%`
+* Some [syntax](./Rnotes.md#syntax) is potentially confusing
+  * The modulus operator is `%%`
+  * Vecotrized logical operators are `&` and `|` (per
+    [Brittany Parsons][Parsons1])
+    * `&&` and `||` do someting ... different. Have not yet figured
+      those out.
+  * `:::` is not the same as `::`!
+  * `<<-` is not the same as `<-`!
+  * The `.` and `_` characters are semi-reserved. You *could* use them
+    in varaible names if you wanted to, but there are
+    [reasons not to](./Rnotes.md#s3)
+  * You can `next` (no parenthesis) but you'll want to `return()`.
 * R will work to coerce modes for you to "make things work." This
   occurs transparently and may take you places you don't want to be.
 * [NA](./Rnotes.md#NA) carries with it a specific mode, and can be any
@@ -38,16 +55,17 @@
   output had a column header, then in the process of forcing a vector
   R will coerce all your values to character to accomodate the
   header.
-* `:::` is not the same as `::`!
 * `sprintf()` can use vectors as bind arguments, producing a character
   vector as output. It will [recycle](./Rnotes.md#recycling) if
   needed, but only if all vector arguments are of the same modulus.
-* The `.` and `_` characters are semi-reserved. You *could* use them
-  in varaible names if you wanted to, but there are
-  [reasons not to](./Rnotes.md#syntax)
 * R makes a brave attempt at
   [Object Oriented Programming](./Rnotes.md#oop). It is a powerful
   feature but different from OOP in other languages.
 * GitHub Markdown is very touchy. Putting code blocks in lists can
   cause disruption of all following markdown syntax if the
   [rules](./Rnotes.md#markdown) are not carefully followed.
+* R preserves your workspace, which is nice but potentially
+  confusing. Using `rm(list=ls())` will clear all variables in the
+  current environment.
+
+[Parsons1]: https://class.coursera.org/rprog-033/forum/thread?thread_id=224#post-1472
