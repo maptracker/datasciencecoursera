@@ -1,12 +1,75 @@
-# Fundamentals #
+
+* [Fundamentals](#fundamentals)
+  * [Syntax](#syntax)
+    * [Non-obvious Operators](#oddop)
+  * [References and Helpful Tools](#reftool)
+* [Objects](#objects)
+  * [Object Utility Methods](#objutil)
+  * [Atomic Classes](#atomic)
+  * [Date and Time](#datetime)
+  * [Vectors, Matrices and Data Frames](#vecmat)
+    * [Subsetting](#subsetting)
+    * [Vectors](#vectors)
+      * [Vectorization](#vectorization)
+    * [Lists](#lists)
+    * [Matrices](#matrices)
+    * [Recycling](#recycling)
+    * [Arrays](#arrays)
+    * [Factors](#factors)
+    * [Data Frames](#dataframe)
+* [Data Import and Export](#importexport)
+  * [Data Import](#import)
+  * [Data Export](#export)
+  * [Connections](#connections)
+* [Control Structures](#control)
+  * [if, else](#ifelse)
+  * [for loops](#forloop)
+  * [while loops](#while)
+  * [repeat, next, break, return](#nextbreak)
+  * [Loop Functions](#loopfunc)
+    * [lapply](#lapply)
+    * [sapply](#sapply)
+    * [vapply](#vapply)
+    * [mapply](#mapply)
+    * [apply](#apply)
+    * [tapply](#tapply)
+      * [split](#split)
+    * [mapply](#mapply)
+* [Functions](#functions)
+  * [Symbol Scoping](#scoping)
+* [Packages](#packages)
+* [Object Oriented Programming](#oop)
+  * [S3 OOP](#s3)
+    * [Importance of Classes in S3](#s3classes)
+  * [S4 OOP](#s4)
+* [Developing in R](#rdeveloping)
+  * [Errors and Error Handling](#errors)
+  * [Debugging](#debugging)
+  * [Programmer-like Objects](#dataobject)
+* [Text Handling](#texthandling)
+* [Probability](#probability)
+* [Random Things](#randomstuff)
+  * [Generating Examples](#makeexamp)
+  * [Internal R Stuff](#rinternals)
+  * [Serialization](#serialization)
+  * [Scott Wisdom](#wisdom)
+  * [Weird Things](#weird)
+    * [Aliases, Aliases, Aliases](#aliases)
+    * [data.class() vs class()](#dataclassweird)
+  * [Markdown Notes](#markdown)
+
+# <a name='fundamentals'></a> Fundamentals #
 
 * `x <- y` : The arrow operator is **always** a copy function. That
   is, it does NOT simply create a new reference/pointer to the
   right-hand argument. In the above example, x and y will be "the
   same", but will be two independent objects (manipulating x will not
   change y, even if y is a data frame or other 'complex' object).
-  * FWIW, the `identical(x,y)` function can be used to do a deep
+  * The `identical(x,y)` function can be used to do a deep
     identity test on two objects.
+  * `all.equals(a,b,c,...)` is similar to identical, but it can take
+    multiple arguments and can specify a `tolerance` to allow for
+    minor mathematical differences.
 * `=` can be used as an alias for `<-`
   * Scott avoids this, because it can cause confusion when dealing
     with parameter assignment, which also uses equals, for example
@@ -51,7 +114,7 @@
   `return` will return the *function* return; You probably wanted to
   `return()`.
 
-#### Non-obvious Operators ####
+#### <a name='oddop'></a>Non-obvious Operators ####
 
 * `%%` Modulus
 * `%/%` Integer division (no decimal / remainder)
@@ -62,7 +125,7 @@
   * `&&` / `||` = I still have not quite figured out what this
     does. They're boolean operations that cascade in some way.
 
-#### References and Helpful Tools ####
+### <a name='reftool'></a>References and Helpful Tools ###
 
 * [Advanced R][AdvancedR] = Hadley Wickham's R site
 * [The R Inferno][Rinferno] : A fairly deep look at some of the issues
@@ -71,7 +134,7 @@
   * `checkUsage( myFunction )` : provides some feedback on potential
     issues, like undeclared variables.
 
-# Objects #
+# <a name='objects'></a>Objects #
 
 * [Hadley Wickham : Data structures][WickhamDataStructures] - nice
   overview shared by Scott.
@@ -102,7 +165,7 @@
   * names & dimnames, dimensions (matrices, arrays), class, length, etc
   * user-defined
 
-### Object Utility Methods ###
+### <a name='objutil'></a>Object Utility Methods ###
 
 * `str()` = "Structure"
   * Provides a verbose report of what the object is and what
@@ -128,7 +191,7 @@
 * `as.SOMETHING()` = coerce / cast an object from one mode to another
   * eg `as.integer()`
 
-### Atomic Classes ###
+### <a name='atomic'></a>Atomic Classes ###
 
 * Character
   * default value `""` (empty string)
@@ -194,7 +257,7 @@
     * Asking Scott about NULL seems to make him uncomfortable, like
       telling a parent that their child is eating paste.
 
-### Date and Time ###
+### <a name='datetime'></a>Date and Time ###
 
 * `Date` class
   * Uses POSIX standard relative to 1 Jan 1970, resolved in days for
@@ -236,7 +299,7 @@
 dt <- as.Date("1970-02-01")
 ```
 
-## Vectors, Matrices and Data Frames ##
+## <a name='vecmat'></a>Vectors, Matrices and Data Frames ##
 
 * "Lists of stuff"
 
@@ -311,7 +374,7 @@ v[b] # Will perform the same selection as two lines up
   4 yellow   19.9
   ```
 
-#### Vectors ####
+#### <a name='vectors'></a>Vectors ####
 
 * Most basic object
   * Scott says instead of scalars R uses vectors-of-length-one. That
@@ -341,7 +404,7 @@ v[b] # Will perform the same selection as two lines up
       provide what you need (`integer(0)`, an integer vector with no
       members).
 
-##### Vectorization #####
+##### <a name='vectorization'></a>Vectorization #####
 
 * Many R operations occur in vector context - the arguments are
   vectors, and are operated on in an implicit loop on all vector
@@ -372,7 +435,7 @@ In v - x : longer object length is not a multiple of shorter object length
 [1]  2  8 23
 ```
 
-#### Lists ####
+#### <a name='lists'></a>Lists ####
 
 * Represented as a vector, but can be heterogeneous
 * Lists can be turned into arrays by assigning `dim()`. Scott says
@@ -380,7 +443,7 @@ In v - x : longer object length is not a multiple of shorter object length
   Conversion to an array lets members be accessed by row and column
   indices/names.
 
-#### Matrices ####
+#### <a name='matrices'></a>Matrices ####
 
 * Two dimensional array
 * default components `NA`
@@ -461,9 +524,11 @@ In v - x : longer object length is not a multiple of shorter object length
     arguments cannot be recycled to the same length
   ```
 
-#### Arrays ####
+#### <a name='arrays'></a>Arrays ####
 
-#### Factors ####
+* Under construction
+
+#### <a name='factors'></a>Factors ####
 
 * Factors are "labeled integer vectors"
 * Useful for categorical data, like "Male" / "Female" or "10 ug" /
@@ -499,8 +564,16 @@ In v - x : longer object length is not a multiple of shorter object length
     `exclude = NULL` to count them as well. Scott says some
     statistic shops have altered the table function to have this as
     the default.
+* `gl()` = "Generate Levels", make a vector of factors based on some
+  pattern:
+  
+  ```R
+  gl(n = 3, k = 4, labels = c("alpha", "beta", "gamma"))
+   [1] alpha alpha alpha alpha beta  beta  beta  beta  gamma gamma gamma gamma
+  Levels: alpha beta gamma
+  ```
     
-#### Data Frames ####
+#### <a name='dataframe'></a>Data Frames ####
 
 * Special form of list
   * Each element is effectively a column
@@ -515,7 +588,7 @@ In v - x : longer object length is not a multiple of shorter object length
   * `read.table()` [see below](#import)
   * `data.frame( col1, col2, ... )` = direct generation
 
-# Data Import and Export #
+# <a name='importexport'></a>Data Import and Export #
 
 * [CRAN guide to Data Import/Export][CranImportExport]
 * *I remain very confused over the diversity of import / export methods*
@@ -566,7 +639,8 @@ In v - x : longer object length is not a multiple of shorter object length
 * `scan()` = less convenient that read.table, but **much** faster; Useful
   for very large files.
 
-### Data Export ###
+### <a name='export'></a>Data Export ###
+
 * `save()` = full export of an R object to a file
   * **PREFERRED METHOD**
   * Inverse of `load` 
@@ -628,14 +702,14 @@ In v - x : longer object length is not a multiple of shorter object length
   the alternate clipboard.
 * Session limit of 125 user connections
 
-# Control Structures #
+# <a name='control'></a>Control Structures #
 
 * Useful functions
   * `seq( along.with = myObject )` = same as `seq_along(myObject)` =
     get an iteration of the things in myObject.
   * `length(myObject)` = get the total size / length of myObject
   
-#### if, else ####
+#### <a name='ifelse'></a>if, else ####
 
 ```R
 size <- if (!is.numeric(x)) {
@@ -648,7 +722,7 @@ size <- if (!is.numeric(x)) {
     "Large"
 }
 ```
-#### for loops ####
+#### <a name='forloop'></a>for loops ####
 
 * Curly braces are not needed if the interior of the loop is a single
   statement.
@@ -666,7 +740,7 @@ for (dwarf in dwarves) {
 }
 ```
 
-#### while loops ####
+#### <a name='while'></a>while loops ####
 
 ```R
 i <- 0
@@ -676,7 +750,7 @@ while (i < 10) {
 }
 ```
 
-#### repeat, next, break, return ####
+#### <a name='nextbreak'></a>repeat, next, break, return ####
 
 * `repeat` is basically `while( TRUE )`
 * `break` will exit any of the loop structures
@@ -698,6 +772,147 @@ repeat {
    # Do stuff
 }
 ```
+
+## <a name='loopfunc'></a>Loop Functions ##
+
+* `lapply(x, fun)` = Returns a list the same length as x after
+  applying fun to each element of x
+  * `sapply` = simplified version of lapply
+    * `vapply` = similar to sapply, may be faster in some cases
+    * `mapply` = multivariate version of sapply
+* `apply(x, margin, fun)` = Returns vector / array / list after
+  applying a function to either rows, columns or rows and columns.
+* Any `...` arguments will get passed on to the supplied function
+  * Important to watch for argument name collisions here!
+
+### <a name='lapply'></a>lapply() ###
+
+```R
+x <- list(x1 = 35:42, x2 = c(4:1, 2:5))
+#    Input  Function
+lapply( x,    mean )
+```
+
+* **Always** returns a list of same length as the input, with values
+  resulting from applying the function to each list member
+* If the provided object is not a list, R will try to coerce it to one
+* Looping is a C internal (fast)
+* An anonymous function can be provided "in-line" in the lapply()
+  call.
+
+### <a name='sapply'></a>sapply() ###
+
+* Designed to modify the returned value from lapply:
+  * List of vectors of *uniform* length:
+    * Length 1 : Return a **vector**
+    * All other lengths: Return a **matrix**. This is a handy way to
+      get tabular output for an analysis.
+  * Otherwise, return an unaltered list
+
+#### <a name='vapply'></a>vapply() ####
+
+#### <a name='mapply'></a>mapply() ####
+
+```R
+# Call vector() three times:
+# vector( mode = "integer", length = 2 )
+# vector( mode = "logical", length = 3 )
+# vector( mode = "character", length = 5 )
+
+str(mapply( vector, mode = c("integer", "logical", "character"),
+            length = c(2,3,5)))
+List of 3
+ $ integer  : int [1:2] 0 0
+ $ logical  : logi [1:3] FALSE FALSE FALSE
+ $ character: chr [1:5] "" "" "" "" ...
+```
+
+* Multivariate version of sapply, applying the function to the `...`
+  arguments.
+  * The argument `MoreArgs` is used to shuttle additional arguments
+    into the called function.
+* mapply is very useful in [vectorizing](#vectorization) a function
+
+### <a name='apply'></a>apply() ###
+
+```R
+x <- cbind(x1 = 35:42, x2 = c(4:1, 2:5))
+dimnames(x)[[1]] <- letters[1:8]
+#    Input  MarginFlag  Function
+apply( x,      2,         mean )
+```
+
+* Generally used with matrices, but can also work with general arrays
+* 'margin' is a flag indicating what apply should, uh, apply the
+  function to:
+  * `1` = rows
+  * `2` = columns
+  * `c(1,2)` = rows and columns
+  * `c(1,3)` = First and third dimensions
+  * A character vector will select dimensions with those names
+* The return value depends on the return value of the function:
+  * fixed-length vector : apply returns an **array**, or a **vector**
+    if the returned array has length 1.
+  * variable-length vector : apply returns a **list**
+* Formal looping is just as efficient, apply has advantage of being a
+  "one-liner".
+* Utility functions based on apply:
+  * `rowSums(x)` &rarr; `apply(x, 1, sum)`
+  * `rowMeans(x)` &rarr; `apply(x, 1, mean)`
+  * `colSums(x)` &rarr; `apply(x, 2, sum)`
+  * `colMeans(x)` &rarr; `apply(x, 2, mean)`
+  * For some reason, these shortcuts are *much* faster than using
+    apply directly.
+  * The argument `na.rm` can be set to true to automatically exclude
+    NA entries from the calculation. Otherwise a single NA value in an
+    operation will result in a final value of NA.
+
+### <a name='tapply'></a>tapply() ###
+
+```R
+x <- c(20,33,49,33,42,30,41,26,5,23)
+y <- c('b','a','a','c','c','a','b','c','c','c')
+z <- c('i','i','i','k','j','i','j','k','k','k')
+#      Input    Factors       Function
+tapply(  x,   list(y=y,z=z),    mean)
+
+   z
+y          i  j     k
+  a 37.33333 NA    NA
+  b 20.00000 41    NA
+  c       NA 42 21.75
+```
+
+* Applies a function over a subset of a vector. The subsets are
+  defined by one or more vectors, each the same length as the data.
+  * Uses `split` (below) to break up the data. `tapply(x, f, mean)`
+    &equiv; `lapply(split(x,f), mean)`
+
+#### <a name='split'></a>split() ####
+
+```R
+myData <- c(20,33,49,33,42,30,41,26,5,23)
+myFactors <- c('b','a','a','c','c','a','b','c','c','c')
+split(myData,myFactors)
+
+$a
+[1] 33 49 30
+
+$b
+[1] 20 41
+
+$c
+[1] 33 42 26  5 23
+```
+
+* `split()` is the function used by `tapply` to combine a vector of
+  data with a factor vector and produce a list of the data,
+  partitioned by factors.
+* Factors can be a single vector, or a list of vectors.
+  * Argument `drop` (default FALSE) will cause any unrepresented
+    factor levels to be excluded.
+
+### <a name='mapply'></a>mapply() ###
 
 # <a name='functions'></a>Functions #
 
@@ -932,8 +1147,7 @@ and it encounters an expression using `z`, it will start following the
 environment search pattern to find the "nearest" instance of z, which
 it quickly finds inside function f's environment.
 
-
-# Packages #
+# <a name='packages'></a>Packages #
 
 * `a <- available.packages()` = puts list of all packages in `a`
 * `head(rownames(a), 3)`
@@ -984,7 +1198,7 @@ disadvised.
 * The `.` character has a special role in S3 - It defines
   class-specific dispatch methods (see below)
 
-#### Importance of Classes in S3 ####
+#### <a name='s3classes'></a>Importance of Classes in S3 ####
 
 Classes play a central role in S3. They are used for "method
 dispatch", where a function can call different code depending on the
@@ -1105,8 +1319,45 @@ speak(bovine, alert = TRUE)
 * S4 is recommended when
   [developing with Bioconductor pacakages][s4bioconductor].
 
+# <a name='rdeveloping'></a>Developing in R #
 
-# <a name='dataobject'></a>Programmer-like Objects #
+* Some coding style suggestions
+  * [Google R Style Guide][GoogleStyle]
+  * [R Coding Conventions][RCC]
+
+### <a name='errors'></a>Errors and Error Handling ###
+
+* `message` = informational
+* `warning` = Possible problem, no impact on code flow
+* `error` = Fatal problem, code halts (via `stop`)
+* `condition` = Programmer-defined event
+
+### <a name='debugging'></a>Debugging ###
+
+* `traceback()` = Prints the call stack of the last uncaught error
+  * Errors within `try` and `tryCatch` are not considered
+* `debug( aFunction )` = Flag a function for step-wise debugging
+  * `undebug( aFunction )` to turn off
+* `browser()` = Break out of execution and allow inspection of the
+  environment. Generally included within code that's being
+  developed. Special commands when in browser mode:
+  * `help` = show browser commands
+  * `c` aka `cont` = return to execution
+  * `f` = finish execution of current loop or function
+  * `n` = next statement, stepping over functions
+  * `s` = next statement, stepping into functions
+  * `where` = stack trace at current point
+  * `Q` = exit browser *and* evaluation
+* `trace` = Inject debugging code into any function
+  * Arguments define what the code is, and where it should go
+  * `tracingState()` = turns tracing on and off
+* `recover()` = Can change error behavior so a browser is invoked
+  rather than throwing a message.
+  * Set `options(error = recover)` to automatically drop into recover
+    mode when an error is thrown. You will be presented with a stack
+    trace and can choose the frame you wish to inspect.
+
+### <a name='dataobject'></a>Programmer-like Objects ###
 
 That is, structuring complex objects as one might in other
 langauages. Scott recommends using lists, but warns that it becomes
@@ -1141,9 +1392,18 @@ $dogs$butch$friendly
 
 $clean
 [1] TRUE
+
+# If I passed the kennel's dogs as an un-named list:
+kennel <- list( dogs = list(fido, butch), clean = TRUE)
+
+# ... then I'd need to use array subsetting rather than names to
+# get information on its $dogs:
+
+kennel$dogs[[1]]$toys
+[1] "ball"  "stick"
 ```
 
-# Text Handling #
+# <a name='texthandling'></a>Text Handling #
 
 * `print()` = Basic STDOUT, includes newline
   * Objects can define an internal print method, which will be invoked here
@@ -1169,17 +1429,41 @@ $clean
 
 * `prettyNum()` = Fairly extensive numeric formatting options
 
-# Probability #
+# <a name='probability'></a>Probability #
 
 * `runif()` = The uniform distribution
 
-# Random
+# <a name='randomstuff'></a>Random Things #
 
 * `R.Version()` = show the software version information for current
   R session
 * There have been requests for
   [emacs keybindings in RStudio][RstudioEmacs] but they are no plans
   to implement it.
+
+### <a name='makeexamp'></a>Generating Examples ###
+
+```R
+# Ten random letters a-c
+sprintf("x <- c('%s')", paste(letters[runif(10, min = 1, max = 4)],
+                              collapse = "','"))
+# Ten random integers 1-100
+sprintf("x <- c(%s)", paste(as.integer(runif(10, min = 1, max = 101)),
+                             collapse = ","))
+```
+
+## <a name='rinternals'></a>Internal R Stuff ##
+
+* `match.fun( functionRequest )` = Helper method that pulls out a
+  function based on polymorphic input. functionRequest can be a
+  function, a symbol, or string, and R will try to locate and return
+  the most appropriate function matching the request. This function is
+  utilized by many other methods that take functions as input (eg
+  `apply`)
+* `as.environment()` = Used both to coerce and as a helper function
+  when an argument requires an environment. Can take an environment
+  object (returns it), a positive integer (takes from search() list),
+  a character string (match by name) or -1 (calling environment).
 
 ## <a name='serialization'></a>Serialization ##
 
@@ -1202,7 +1486,8 @@ $clean
 
 * See also the [Data Import](#import) section above.
 
-## Scott Wisdom ##
+## <a name='wisdom'></a>Scott Wisdom ##
+
 * <a name='masking'></a>Ariella pointed out that identically-named
   functions from one library will "overwrite" each other (the most
   recently loaded package wins).
@@ -1231,7 +1516,7 @@ $clean
     get("someFunction", pos = "somePackage")( color = "lizzard" )
     ```
 
-## Weird Things ##
+## <a name='weird'></a>Weird Things ##
 
 #### <a name='aliases'></a>Aliases, Aliases, Aliases ####
 
@@ -1331,3 +1616,5 @@ Not R *per se*, but these have been useful in making this document...
 [s4bioconductor]: https://stackoverflow.com/questions/3602154/when-does-it-pay-off-to-use-s4-methods-in-r-programming
 [S]: https://en.wikipedia.org/wiki/S_%28programming_language%29
 [sHistory]: http://ect.bell-labs.com/sl/S/history.html
+[GoogleStyle]: http://google-styleguide.googlecode.com/svn/trunk/Rguide.xml\
+[RCC]: http://www.aroma-project.org/developers/RCC
