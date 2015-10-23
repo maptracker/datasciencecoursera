@@ -3,15 +3,23 @@
   references. Variables are passed around as names, and are evaluated
   on-the-fly by
   [searching a complex environment](./Rnotes.md#scoping).
-  * You can get help on many (all?) operators by quoting them (since
-    they are kind-of sort-of just names), eg `?"&"` or `?"<-"`
+  * Loosely speaking, **you can not modify an existing
+    object**. Rather, you can copy, or **make an altered copy of**, an
+    existing object. But the copy loses the "environment", which is
+    critical to maintaining object scope.
+* You can get help on many (all?) operators by quoting them (since
+  they are kind-of sort-of just names), eg `?"&"` or `?"<-"`
+* R does not have scalars. Single values are
+  [vectors of length 1](./Rnotes.md#vectors).
+  * In addition to [formal null values](./Rnotes.md#specialvalues),
+    you also have empty vectors (length 0).
 * [Set and get](./Rnotes.md#setget) methods are generally written the
   same but are different underlying code.
 * Be alert for [recycling](./Rnotes.md#recycling). This is where R
   needs additional data, so keeps looping through a "too short" input
   to make sure it has enough entries (like rectangularizing a
-  matrix). You will be warned that recycling happens only if there is
-  a modulus.
+  matrix). You will be warned that recycling happens *only* if there
+  is a modulus.
 * Some [syntax](./Rnotes.md#syntax) is potentially confusing
   * The modulus operator is `%%`
   * Vecotrized logical operators are `&` and `|` (per
@@ -67,5 +75,8 @@
 * R preserves your workspace, which is nice but potentially
   confusing. Using `rm(list=ls())` will clear all variables in the
   current environment.
+* There's a weird list variant called a
+  [pairlist](./Rnotes.md#pairlists). It only seems to crop up with
+  certain functions, like `formals()`.
 
 [Parsons1]: https://class.coursera.org/rprog-033/forum/thread?thread_id=224#post-1472

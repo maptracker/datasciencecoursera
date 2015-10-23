@@ -42,6 +42,9 @@
   * [S3 OOP](#s3)
     * [Importance of Classes in S3](#s3classes)
   * [S4 OOP](#s4)
+    * [setClass](#s4setclass)
+    * [new](#s4new)
+    * [Rle](#s4rle)
 * [Developing in R](#rdeveloping)
   * [Errors and Error Handling](#errors)
   * [Debugging](#debugging)
@@ -104,8 +107,8 @@
   * The emacs ESS major mode [ESS][ESS] will irritatingly convert `_`
     to ` <- ` automatically. Probably can override somewhere.
 * `<<-` is a special assignment vector that will bypass normal
-  [scope](#scoping) in some circumstances and assign the global
-  variable
+  [scope](#scoping) to assign variables in the
+  function-environment-hierarchy
 * `:::` is used to access [internally scoped](#internalscope) variables
 * Backticks allow recovery of function objects that would otherwise
   insist on be function-y eg `` `if` ``
@@ -221,7 +224,7 @@
   * `is.complex()` / `as.complex()`
 * Logical (Boolean)
   * default value `FALSE`
-* Special values
+* <a name='specialvalues'></a>Special values
   * <a name='NA'></a>`NA` = "Not Available"
     * `is.na()` = boolean check
     * Apparently returned for "not possible", eg `as.integer("pineapple")`
@@ -374,6 +377,9 @@ v[b] # Will perform the same selection as two lines up
   4 yellow   19.9
   ```
 
+* When using [S4 objects](#s4), the "slots" are accessed with the `@`
+  operator.
+
 #### <a name='vectors'></a>Vectors ####
 
 * Most basic object
@@ -437,11 +443,28 @@ In v - x : longer object length is not a multiple of shorter object length
 
 #### <a name='lists'></a>Lists ####
 
-* Represented as a vector, but can be heterogeneous
+* A list of things, optionally keyed to names.
+  * The "things" are formally referred to as "elements". When I
+    mentioned that I think of them as "columns" I got a disapproving
+    look from Scott.
+* Utilities
+  * `is.list( obj )` = Logical check
+  * `typeof( genericList )` &rarr; `list`
 * Lists can be turned into arrays by assigning `dim()`. Scott says
   this is generally useless, but occasionally very useful;
   Conversion to an array lets members be accessed by row and column
   indices/names.
+* <a name='pairlists'></a>A **dotted pair list** is a weird variant that
+  shows up in some output. It apparently has something to do with
+  Lisp, but I have not found anything beyond cryptic
+  references. AFAICT you can use these lists just like other lists.
+  * Found while playing with the `formals()` function.
+  * `typeof( myWeirdDottedPairList )` &rarr; `"pairlist"`
+  * `is.list( myWeirdDottedPairList )` &rarr; `TRUE`
+  * `is.pairlist( myWeirdDottedPairList )` &rarr; `TRUE`
+  * `is.pairlist( myNormalList )` &rarr; `FALSE`
+  * `is.pairlist(NULL)` &rarr; `TRUE`
+  * `is.list(NULL)` &rarr; `FALSE`
 
 #### <a name='matrices'></a>Matrices ####
 
@@ -966,6 +989,20 @@ $c
       * In these situation any "other" arguments *must* be named when
         calling the function (otherwise they will be gathered into the
         "general" arguments specified by the initial `...`).
+* R calls the defined argument list **formals**
+  * The arguments specified for a function can be found with the
+    `formals()` function, which returns a "dotted pair" list of
+    key/values.
+  
+    ```R
+    formals(fun = vector)
+    $mode
+    [1] "logical"
+    
+    $length
+    [1] 0
+    ```
+
 
 ```R
 myFunc <- function( arg1, arg2 = optionalDefaultValue) {
@@ -976,6 +1013,7 @@ myFunc <- function( arg1, arg2 = 2) {
     arg1 + arg2
 }
 ```
+
 
 ### <a name='scoping'></a>Symbol Scoping ###
 
@@ -1081,11 +1119,18 @@ myFunc <- function( arg1, arg2 = 2) {
     difficult.
 * The scoping paradigm is apparently why R objects must all be kept in
   memory, as opposed to cached to disk.
-* `<<-` is a special gets method that will assign a variable
-  "normally" if it can find it in the parent search path, but if not
-  will assign the variable in the global scope.
-  * Docs say this is normally only used in functions. Scott reacted
-    with alarm when I mentioned that Ron had told me about it.
+* `<<-` is a special gets method that will assign a variable "above"
+  the current environment:
+  1. If the assignment is occuring in a function's environment, R will
+     first "look up" into the function's environment (and recursively
+     through any nested parents) to try to find the variable. As soon
+     as it locates the variable, it assigns the value within that
+     environment.
+  2. If R fails to find the variable in any of the nested function
+     environments (or if the assignment occurs outside a function)
+     then assignment will occur at the global environment, whether the
+     symbol exists there or not.
+    
 
 Great scoping example from [O Beautiful Code][RScopeSearching]:
 ```R
@@ -1316,8 +1361,81 @@ speak(bovine, alert = TRUE)
 
 ## <a name='s4'></a>S4 OOP ##
 
+* [StackExchange S4 Useful Links][SeUsefulLinks]
 * S4 is recommended when
   [developing with Bioconductor pacakages][s4bioconductor].
+* My [Bioconductor notes](./bioconductorNotes.md)
+* [Useful S4 / slots description][SeS4slots]
+* `typeof( someS4object )` &rarr; `S4`
+
+### <a name='s4setclass'></a>setClass ###
+
+* `setClass(className, representation)` is used to define an S4 class.
+
+   ```R
+   setClass("dog", representation = representation(
+             color = "character",
+             age   = "integer",
+             friendly = "logical"
+             ))
+   ```
+   
+ * Arguments:
+   * `representation` = Defines the **slots** that the objects will
+     have. A slot is a named container that can hold arbitrarily
+     complex data, including other S3/S4 objects. If a "foo" object
+     has a "bar" slot, it will have one and only one value for bar,
+     but that value can be anything *(except perhaps another foo
+     object?)*
+   * `contains` = optional, defines superclasses of this class. Used
+     to extend existing objects, or to inherit functionality from
+     them. Can be "VIRTUAL".
+   * `prototype` = optional default values for the object
+   * `validity` = optional sanity-checking method
+   * `where` = optional specification of the environment
+   * `sealed` = if TRUE, prevents the class from being redefined by
+     subsequent setClass calls.
+
+### <a name='s4new'></a>new ###
+
+### <a name='s4rle'></a>Rle ###
+
+* "Run-length encoding"
+* Compact mechanism to represent a vector with repetition.
+  * "Runs" of values are collapsed into the "values" property, with
+    the length of each run stored in a separate "lengths" property
+* Construction
+  * Directly with `Rle( someVector )`
+  * Explicitly with `Rle( values = valueVector, lengths = lenVector)`
+  * Coerced via `as( compatibleObject, "Rle")`
+* Conversion
+  * `as.vector( myRle )`
+  * `as.factor( myRle )`
+* `getOption("dropRle")` = default false. For some operations using
+  Rles, affects if you get an Rle back (FALSE) or a vector (TRUE).
+
+```R
+myVec <- c('c','a','a','a','a','b','b','c','b','b')
+myRle <- Rle( myVec );
+myRle
+
+character-Rle of length 10 with 5 runs
+  Lengths:   1   4   2   1   2
+  Values : "c" "a" "b" "c" "b"
+# That is: 1 c, 4 a, 2 b, 1 c, 2 b
+
+as.factor(myRle)
+ [1] c a a a a b b c b b
+Levels: a b c
+
+identical(as.vector(myRle), myVec)
+[1] TRUE
+
+# Can also build with a list of values and repeat lengths:
+anRle <- Rle( values = c("c","a","b","c","b"), lengths = c(1,4,2,1,2))
+identical(anRle, myRle)
+[1] TRUE
+```
 
 # <a name='rdeveloping'></a>Developing in R #
 
@@ -1327,10 +1445,21 @@ speak(bovine, alert = TRUE)
 
 ### <a name='errors'></a>Errors and Error Handling ###
 
-* `message` = informational
-* `warning` = Possible problem, no impact on code flow
-* `error` = Fatal problem, code halts (via `stop`)
-* `condition` = Programmer-defined event
+* Four levels of error:
+  * `message` = informational
+    * `suppressMessages( boolean )` = If true, turn off messages
+  * `warning` = Possible problem, no impact on code flow
+    * `suppressWarnings( boolean )` = turn of warnings if true
+  * `error` = Fatal problem, code halts (via `stop`)
+  * `condition` = Programmer-defined event
+* Funtions that throw errors. The first arguments in the calls will be
+  coerced into strings then joined together to make the message.
+  * `message()` = print a message.
+  * `warning()` = throw a warning.
+  * `stop()` = throw an error.
+    * `stopifnot( cond1, cond2, ... )` = conditional stop, will halt
+      unless all passed arguments are true. If a stop is triggered,
+      the first condition that caused it is reported.
 
 ### <a name='debugging'></a>Debugging ###
 
@@ -1618,3 +1747,5 @@ Not R *per se*, but these have been useful in making this document...
 [sHistory]: http://ect.bell-labs.com/sl/S/history.html
 [GoogleStyle]: http://google-styleguide.googlecode.com/svn/trunk/Rguide.xml\
 [RCC]: http://www.aroma-project.org/developers/RCC
+[SeS4slots]: https://stackoverflow.com/a/4714080
+[SeUsefulLinks]: https://stackoverflow.com/questions/4143611/sources-on-s4-objects-methods-and-programming-in-r
