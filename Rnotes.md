@@ -51,6 +51,8 @@
   * [Programmer-like Objects](#dataobject)
 * [Text Handling](#texthandling)
 * [Probability](#probability)
+  * [Distributions](#distributions)
+  * [Random Number Generator](#rng)
 * [Random Things](#randomstuff)
   * [Generating Examples](#makeexamp)
   * [Internal R Stuff](#rinternals)
@@ -174,6 +176,11 @@
   * Provides a verbose report of what the object is and what
     value(s) it contains.
   * Includes a dozen parameters controlling output
+* `summary()`
+  * Context-specific, brief information on an object
+  * For lists / vectors reports min, max, mean, median and quartiles
+* `head()` = report first n (default 10) lines of a list / vector /
+  file / etc
 * `typeof()` = "storage mode" (basic class)
   * For a vector, reports the mode of the contents (ie not "vector")
 * `class()` = like typeof, but reports object classes (ie, inherited
@@ -1560,7 +1567,112 @@ kennel$dogs[[1]]$toys
 
 # <a name='probability'></a>Probability #
 
-* `runif()` = The uniform distribution
+## <a name='distributions'></a>Distributions ##
+
+* Nearly all distributions have four functions associated them, keyed
+  by the first letter of the function name: `d`, `p`, `q` and `r`. For
+  example, the Uniform Distribution has four functions:
+  * `dunif()` = The [probability density function][WpDensityFunc], "the
+    relative likelihood for this random variable to take on a given
+    value"
+    * The first argument, `x`, is a vector of quantiles
+  * `punif()` = The
+    [cumulative distribution function][WpCumulativeFunc], "the
+    probability that a real-valued random variable X with a given
+    probability distribution will be found to have a value less than
+    or equal to x"
+    * The first argument, `q`, is a vector of quantiles
+  * `qunif()` = The [quantile function][WpQuantileFunc], "the value at
+    which the probability of the random variable being less than or
+    equal to this value is equal to the given probability"
+    * The first argument, `p`, is a vector of probabilities
+  * `runif()` = A function generating random values selected from the
+    distribution
+    * The first argument, `n`, is the number of observations
+
+#### Specific Distributions ####
+
+* `<*>` = one of d/p/q/r
+* Logical flag `log` (`d`) and `log.p` (`p/q`) will report logarithms
+  of probabilities when true. Default is (always?) FALSE.
+* Logical flag `lower.tail` will report probabilites for `P[X <= x]`
+  when TRUE (default), while FALSE reports `P[X > x]`
+
+* `<*>unif()` = The [uniform distribution][WpUniformDist]
+  * All functions have `min` and `max` arguments
+* `<*>norm()` = The [normal distribution][WpNormalDist]
+  * All functions have `mean` and `sd` arguments
+* `<*>pois()` = The [Poisson distribution][WpPoissonDist]
+  * All functions have the `lambda` argument
+* `<*>bionom()` = The [binomial distribution][WpBinomialDist]
+  * All functions have the `size` and `prob` arguments
+* `<*>gamma()` = The [gamma distribution][WpGammalDist]
+  * All functions have the `shape`, `rate` and `scale` arguments
+* `<*>exp()` = The [exponential distribution][WpExponentialDist]
+  * All functions have the `rate` argument
+
+## <a name='rng'></a>Random Number Generator ##
+
+Random numbers in R are not meant to be cryptographic, but rather to
+fall as randomly as practical along a specified distribution. Multiple
+[pseudo random number generator][WpPRNG] (PRNG) algorithms can be
+chosen.
+
+* `set.seed( mySeed )` = Sets the RNG seed. mySeed is an integer. The
+  seed will "auto advance" as the code executes.
+  * If you know your code has a random component (or suspect it might)
+    it is a good idea
+* `RNGkind(kind = rngType)` = Choose alternate PRNG algorithms. The
+  default is [Mersenne-Twister][WpMersenneTwister], which has an
+  insanely large period.
+* `sample( x )` picks random values from x
+  * The second argument `size` specifies the number of values to
+    select. If left out, will equal the length of x. If only x is
+    provided, then the returned value will be a random permutation of
+    x.
+  * When argument `replace` is FALSE (default) then the sample is
+    chosen without replacement (each value in x can only be chosen
+    once), otherwise replacement is used.
+
+## Random Linear Model ##
+
+*This code is just transcribed from [lecture 89](https://class.coursera.org/rprog-033/lecture/89)*
+*y = &beta;<sub>0</sub> + &beta;<sub>1</sub>x + &epsilon;*
+
+```R
+set.seed(20)
+# x is a numeric vector generated from the normal distribution:
+x <- rnorm(n = 100)
+e <- rnorm(n = 100, mean = 0, sd = 2)
+# y will also be a 100-element numeric vector:
+y <- 0.5 + 2 * x + e
+summary(y)
+plot(x,y)
+```
+
+X is binary:
+
+```R
+set.seed(10)
+x <- rbinom( n = 100, size = 1, prob = 0.5 )
+e <- rnorm(n = 100, mean = 0, sd = 2)
+y <- 0.5 + 2 * x + e
+summary(y)
+plot(x,y)
+```
+
+Simulate from Poisson:
+Y ~ Poisson(&mu;)
+log&mu; = *&beta;<sub>0</sub> + &beta;<sub>1</sub>x*
+
+```R
+set.seed(1)
+x <- rnorm(n = 100)
+logMu <- 0.5 + 0.3 * x
+y <- rpois( n = 100, lambda = exp(logMu) )
+summary(y)
+plot(x,y)
+```
 
 # <a name='randomstuff'></a>Random Things #
 
@@ -1749,3 +1861,14 @@ Not R *per se*, but these have been useful in making this document...
 [RCC]: http://www.aroma-project.org/developers/RCC
 [SeS4slots]: https://stackoverflow.com/a/4714080
 [SeUsefulLinks]: https://stackoverflow.com/questions/4143611/sources-on-s4-objects-methods-and-programming-in-r
+[WpDensityFunc]: https://en.wikipedia.org/wiki/Probability_density_function
+[WpCumulativeFunc]: https://en.wikipedia.org/wiki/Cumulative_distribution_function
+[WpQuantileFunc]: https://en.wikipedia.org/wiki/Quantile_function
+[WpUniformDist]: https://en.wikipedia.org/wiki/Uniform_distribution_%28continuous%29
+[WpNormalDist]: https://en.wikipedia.org/wiki/Normal_distribution
+[WpPoissonDist]: https://en.wikipedia.org/wiki/Poisson_distribution
+[WpBinomialDist]: https://en.wikipedia.org/wiki/Binomial_distribution
+[WpGammalDist]: https://en.wikipedia.org/wiki/Gamma_function
+[WpExponentialDist]: https://en.wikipedia.org/wiki/Exponential_function
+[WpMersenneTwister]: https://en.wikipedia.org/wiki/Mersenne_Twister
+[WpPRNG]: https://en.wikipedia.org/wiki/Pseudorandom_number_generator
