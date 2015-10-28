@@ -1634,9 +1634,12 @@ chosen.
     chosen without replacement (each value in x can only be chosen
     once), otherwise replacement is used.
 
-## Random Linear Model ##
+## <a name='lecture89'></a>Random Linear Model ##
 
 *This code is just transcribed from [lecture 89](https://class.coursera.org/rprog-033/lecture/89)*
+
+Working with model:
+
 *y = &beta;<sub>0</sub> + &beta;<sub>1</sub>x + &epsilon;*
 
 ```R
@@ -1662,7 +1665,9 @@ plot(x,y)
 ```
 
 Simulate from Poisson:
+
 Y ~ Poisson(&mu;)
+
 log&mu; = *&beta;<sub>0</sub> + &beta;<sub>1</sub>x*
 
 ```R
