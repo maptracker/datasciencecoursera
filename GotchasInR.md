@@ -7,6 +7,8 @@
     object**. Rather, you can copy, or **make an altered copy of**, an
     existing object. But the copy loses the "environment", which is
     critical to maintaining object scope.
+  * `data.table` *is an exception!* This package represents the table
+    objects as references!
 * You can get help on many (all?) operators by quoting them (since
   they are kind-of sort-of just names), eg `?"&"` or `?"<-"`
 * R does not have scalars. Single values are
@@ -78,5 +80,11 @@
 * There's a weird list variant called a
   [pairlist](./Rnotes.md#pairlists). It only seems to crop up with
   certain functions, like `formals()`.
+* If a file contains values that are explicitly quoted, `read.table()`
+  (and variants) will *only* allow them to be read as character
+  mode. You need to
+  [coerce other modes AFTER reading](./Rnotes.md#quotedCoercion)
+* `read.table()` is convienent, but for large data files
+  [scan() is MUCH faster](./Rnotes.md#import)
 
 [Parsons1]: https://class.coursera.org/rprog-033/forum/thread?thread_id=224#post-1472

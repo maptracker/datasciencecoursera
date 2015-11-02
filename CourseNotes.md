@@ -1,5 +1,40 @@
 General notes from the lectures.
 
+# Getting and Cleaning Data
+
+### Week 1 ###
+
+* Nice example relating [SQL to MongoDB][SqlToMongoDB]
+* [Baltimore City Data][BaltimoreData]
+* Data should have four components:
+  1. Original "raw" data
+  2. "Tidy" data
+  3. Code book describing all variables in the tidy set
+  4. Explicit steps for converting raw to tidy
+
+##### Tidy Data #####
+
+* Table / Variable structure
+  * Each variable should be in one column
+    * Each table should have a header row
+  * Each observation should be in one row
+  * Each "kind" of variable should have one table
+    * Generally each table should be its own file
+    * Different tables are linked by shared columns
+* Code Book provides additional descriptive information about experiment
+  * "Code Book" section describes all variables, include units
+    * Variable names should be human readable
+  * Describe summary choices that were made
+  * "Study Design" section describes analysis, including how data were
+    collected
+* Instruction List
+  * Ideally an executable script
+    * Input is the raw data
+    * Output is the tidy data
+    * **NO PARAMETERS** - Script should be fully self-contained
+  * If it is not possible to script the entire process, provide clear
+    written instructions on the manual steps.
+
 # The Data Scientist’s Toolbox
 
 ### Week 3
@@ -69,3 +104,5 @@ General notes from the lectures.
 [nsaunders]: https://nsaunders.wordpress.com/2012/07/23/we-really-dont-care-what-statistical-method-you-used/
 
 [zhangetal]: http://www.biomedcentral.com/1752-0509/5/S3/S4
+[SqlToMongoDB]: https://rickosborne.org/blog/2010/02/infographic-migrating-from-sql-to-mapreduce-with-mongodb/
+[BaltimoreData]: https://data.baltimorecity.gov/

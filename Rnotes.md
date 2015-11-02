@@ -18,6 +18,7 @@
     * [Factors](#factors)
     * [Data Frames](#dataframe)
 * [Data Import and Export](#importexport)
+  * [General File Manipulation](#filesystem)
   * [Data Import](#import)
   * [Data Export](#export)
   * [Connections](#connections)
@@ -35,6 +36,7 @@
     * [tapply](#tapply)
       * [split](#split)
     * [mapply](#mapply)
+    * [plyr](#plyr)
 * [Functions](#functions)
   * [Symbol Scoping](#scoping)
 * [Packages](#packages)
@@ -48,6 +50,7 @@
 * [Developing in R](#rdeveloping)
   * [Errors and Error Handling](#errors)
   * [Debugging](#debugging)
+  * [Profiling](#profiling)
   * [Programmer-like Objects](#dataobject)
 * [Text Handling](#texthandling)
 * [Probability](#probability)
@@ -118,6 +121,8 @@
   nearly all other functions should include parentheses: Using
   `return` will return the *function* return; You probably wanted to
   `return()`.
+* Curly brackets define an "expression", eg `{ op1; op2; op3}`. The
+  last operation is what will be returned.
 
 #### <a name='oddop'></a>Non-obvious Operators ####
 
@@ -618,12 +623,154 @@ In v - x : longer object length is not a multiple of shorter object length
   * `read.table()` [see below](#import)
   * `data.frame( col1, col2, ... )` = direct generation
 
+##### <a name='datatable'></a>Data Tables #####
+
+* Not part of core R:
+  * `install.packages("data.table")`
+  * `library(data.table)`
+  * [Has its own website][datatable], plus [code on GitHub][datatablegithub]
+  * [Comparison to data.frame][dfVSdt]
+  * [Good intro to using data.table][advmanip]
+  * Is supposed to be much faster than data.frame, particularly for
+    subsetting, group and updating.
+  * **OBJECTS ARE UTILIZED AS REFERENCES!!**
+    * `yourDT <- myDT` = yourDT and myDT *are the same object*
+    * Use `yourDT <- copy(myDT)` to get a "distinct" object
+* `myDT <- data.table()` = Create a new data table
+* `tables()` = Shows current tables held in memory
+* Can efficiently add new columns with `:=`
+  * `myDT[, w := z^2]` = Adds a column "w" as the square of z.
+  * `myDT[,b:= mean(x+w),by=a]` = [plyr-like](#plyr) operation that
+    sets column "b" to be equal to the mean of x+w, where x+w are
+    aggregated "by" column a as a factor.
+  * `myDT[, .N, by=x]` = uses special variable `.N` which represents the
+    count of the expression
+* Subsetting
+  * Subsets get complex enough that data.table simply *discards row names*. 
+  * Row subsetting is effectively the same as a DF
+  * Column subsetting is quite different
+    * Can pass a list of functions
+    * Still confused here...
+* `setKey(myDT, z)` = specifies that column "z" holds the "keys"
+  associated with the data.table.
+  * `myDT[ "rootbeer" ]` = Will subset the table with all rows where
+    the designated key column is equal to "rootbeer".
+  * `merge( myTab1, myTab2 )` = Will perform a join on the two tables,
+    merging rows where their key columns match.
+* `fread( myFile )` = Fast read of a data.table.
+  * In addition to being faster than `read.table()`, the defaults look
+    to be different (such as `stringsAsFactors` being false for DT).
+
 # <a name='importexport'></a>Data Import and Export #
 
 * [CRAN guide to Data Import/Export][CranImportExport]
 * *I remain very confused over the diversity of import / export methods*
   * Some of the functions appear to be almost identical (`serialize`
     vs `saveRDS`) and it's unclear what the nuances are.
+* [Advanced Data Manipulation][advmanip] - Tips for working
+  efficiently with large data sets.
+
+### <a name='filesystem'></a>General File Manipulation ###
+
+* General Considerations and Quirks
+  * There are directory-specific commands below, but many of the
+    "file" commands will work with directories as well. For example,
+    file.exists() will return a true value if passed either an
+    existing file or existing directory. Use dir.exists() if you need
+    to explicitly determine if the path is a directory.
+  * Platform variation
+    * Help indicates that you *must not* include a trailing backslash if
+      passing a directory path on Windows.
+    * Case sensistivity varies by platform. On insensitive platforms,
+      some functions may map filenames to upper or lower case.
+  * In most cases R appears to be aware that `~` represents the user's
+    home directory.
+* File manipulation
+  * `list.files( myDir )` = Returns a character vector of the file
+    paths in the specified directory
+    * Defaults to the current working directory
+    * `pattern = myRegExp` = Specifies an optional regular expression
+      against which files must be matched.
+    * `full.names` = Default FALSE, if TRUE will return absolute
+      paths.
+    * `recursive` = Default FALSE, when TRUE the listing recursively
+      drills into directories.
+    * `include.dirs` = Default FALSE, which will exclude directories
+      from the returned value.
+  * `file.exists( myFileList )` = Returns a logical vector if the file
+    exists. Note that for links the result is if the target exists.
+  * `file.remove( myFileList )` = Deletes the passed file paths. Can
+    remove empty directories. Returns logical "success vector"
+  * `unlink( myFileList, recursive = FALSE, force = FALSE )`
+    * Deletes the requested files / directories.
+    * Returns logical "success vector"
+    * Allows `*` and `?` wildcards, as supported by host filesystem.
+    * If `recursive` is TRUE then encountered directories will be
+      fully deleted, if possible. If FALSE then even
+      explicitly-specified empty directories will not be removed.
+  * `file.create( myFileList )` = Creates the files if they do not
+    exist. Returns logical "success vector"
+    * **WILL TRUNCATE EXISTING FILES**
+  * `file.rename( from, to )` = Change a file's name. Returns logical
+    "success vector"
+  * `file.info( myFileList )` = Returns a data frame of information
+    related to the provided paths:
+    * `size` = Size in bytes
+    * `isdir` = Logical flag indicating if the path is a directory
+    * `mode` = Permissions octal flags
+    * `mtime` = Modification time
+    * `ctime` = Creation time
+    * `atime` = Access time
+    * `uid` = User ID
+    * `gid` = Group ID
+    * `uname` = User name
+    * `gname` = Group name
+  * `file.mtime()`, `file.size()`, `file.mode()` = Wrappers around
+    file.info that return just a single column.
+  * `file.show( myFileList )` = Paginated file viewer, like `more`,
+    showing the file(s) requested.
+  * `file.append( targetFiles, sourceFiles )` = Appends the second
+    argument to the first. Not clear to me how multiple/multiple
+    requests are handled.
+  * `file.copy( from, to )` = Make copies of "from" in "to"
+    * `to` can be a list of files, or a single directory.
+      * `recursive = FALSE` When copying to a single directory, the
+        recursive flag indicates if "from" directories should be
+        deep-copied.
+    * `overwrite` = If false, will prevent existing files from being
+      clobbered. The default is "recursive", unclear what that is.
+    * `copy.mode = TRUE` = Specifies if "to" should inherit mode
+      (permissions) from "from"
+    * `copy.date = FALSE` = Specifies if "to" should inherit date from "from"
+* Directory manipulation
+  * `getwd()` = get the current working directory
+  * `setwd( myPath )` = set working directory. Allows absolute and relative
+    paths
+    * Lecture says escaped "\\" must be used for windows hierarchy?
+      That seems poorly designed. Help indicates that getwd will
+      consistently use "/", even on Windows.
+  * `dir.exists( myPath )` = Check that a path exists AND is a
+    directory. Vectorized, will return a logical vector.
+  * `dir.create( myPath, recursive = FALSE, mode = "0777")` = Creates
+    the specified directory with requested mode
+    * A TRUE `recursive` flag will also create any parent directories
+      as needed.
+    * Will throw a warning if the directory already exists
+* Permissions
+  * Use a special integer mode of class `octmode`
+  * `Sys.chmod( myPaths, mode = "0777")` = Sets the permissions on one
+    or more files.
+  * `Sys.umask( optionalNewValue )` = Sets and returns the current umask
+  * `file.mode( )` = wrapper around file.info; Returns the octal mode of the
+* Links
+  * Platform dependent! Generally if a link is passed to one of the
+    above functions, the operations will be on the target, not the
+    link itself.
+  * `file.symlink( from, to )` = Create a symbolic link to a
+    file. Returns logical "success vector"
+  * `file.link( from, to )` = Create a hard link to a file. Returns
+    logical "success vector"
+  
 
 ### <a name='import'></a>Data Import ###
 
@@ -653,6 +800,13 @@ In v - x : longer object length is not a multiple of shorter object length
   * `read.csv()` = alias for read.table, but with different defaults
     for CSV files. Use `read.csv2()` for CSV formats from countries
     where ',' is used as a decimal point.
+  * <a name='quotedCoercion'></a>**Caution** - If a "cell" in a file is
+    quoted, R will consider it character data *no matter what you've
+    specified with colClasses*. If you try to set the mode with
+    colClasses to something other than "character" (numeric, logical,
+    etc), R will halt with an error. You need to read such columns as
+    character, [then explicitly cast them][ReadCsvForcedChar], for
+    example with as.numeric().
 * `readLines(fileName, numLines)` = read arbitrary lines from a text file
   * returns a character vector
 * `load()` = reads in binary R object saved to a file
@@ -668,6 +822,45 @@ In v - x : longer object length is not a multiple of shorter object length
 * `loadRDS` = Similar to `unserialize`. Preferred?
 * `scan()` = less convenient that read.table, but **much** faster; Useful
   for very large files.
+* <a name='downloadfile'></a>`download.file(url, destination)` =
+  Download a file over the network and save it to a local destination.
+  * `method` = Specifies the method used (internal, libcurl, wget, curl)
+    * `extra` = Additional options passed to the method
+    * HTTPS sites may not work with some methods (`curl` will work)
+  * `quiet` = Set to TRUE to suppress status and progress
+  * `cacheOK` = Default TRUE, which allows server-side cached values
+    to be used.
+  * Proxies are handled with environment variables http_proxy /
+    ftp_proxy (or upper case variants).
+  * `options( internet.info = 2 )` = Default verbosity. Setting to 0
+    or 1 providesmore information.
+  * [url()](#connections) provides a finer-grained connection
+    mechanism to access a networked file.
+* `library(XML)` - [Using XML in R][xmlInR]
+  * `myDoc <- xmlTreeParse( fileOrUrl )` = parses the tree into a structure
+    * `htmlTreeParse()` = version of xmlTreeParse with defaults
+      altered for HTML data.
+  * `xmlSApply( xmlNode, <xmlType> )`. "<xmlType>" is one of the naked
+    identifiers:
+    * `xmlValue` = The text content of the nodes
+    * `xmlAttrs` = Attributes assigned to the nodes
+    * `xmlSize` = Number of child nodes
+  * `xpathSApply( xmlNode, "<nodeSelector>", <xmlType> )` = Like
+    above, but "<nodeSelector>" is a quoted xpath node selection
+    syntax
+* `library(jsonlite)` - [jsonlite tutorial][jsonlite]
+  * `jsonData <- fromJSON( myFileOrUrl )`
+    * jsonData will be a nested data.frame representing the
+      hierarchical JSON object.
+* <a name='complexformats'></a>More complex formats
+  * `install.packages("XLConnect")`
+    * Looks to be a very rich library to read and write Excel workbooks.
+    * `xlcDump()` = Dumps R objects as worksheets in a workbook
+    * `xlcRestore()` = Reads such a workbook back into R
+  * `library(xlsx)` = Allows import and export of Excel spreadsheets
+    * `read.xlsx( file, sheetIndex = mySheetNum, header = TRUE)`
+    * `colIndex` and `rowIndex` are vector arguments specifying
+      specific columns and rows to read.
 
 ### <a name='export'></a>Data Export ###
 
@@ -705,6 +898,11 @@ In v - x : longer object length is not a multiple of shorter object length
 * Lectures point out that text-based formats are more friendly with
   version control systems for finer-granularity change tracking
 * Also see the [Serialization](#serialization) section below
+* Note also the [more complex formats](#complexformats) mentioned
+  above in the Import section, many of those packages also export
+* `library(jsonlite)`
+  * `jsonText <- toJson( rObject )` = will serialize an R object to
+    JSON. Lots of configuration arguments.
 
 ### <a name='connections'></a>Connections ###
 
@@ -715,6 +913,7 @@ In v - x : longer object length is not a multiple of shorter object length
   * file methods are local machine only and need to be absolute paths
   * `URLencode` can be used to escape parameters in the
     URL. `URLdecode()` might be useful for unescaping.
+  * [download.file()](#downloadfile) is a simpler mechanism 
 * Compression algorithms: `gzfile()`, `bzfile()`, `xzfile()`, `unz()`
   * zip files may be read with unz, but not created
 * `open( myCon ... )` = used to create a handle after specifying one
@@ -943,6 +1142,18 @@ $c
     factor levels to be excluded.
 
 ### <a name='mapply'></a>mapply() ###
+
+## <a name='plyr'></a>plyr ###
+
+* `library(plyr)`
+* Formal combination of "split-apply-combine". Functions are of format
+  `<in><out>ply`, where "<in>" and "<out>" are one of:
+  * `a` = array
+  * `l` = list
+  * `d` = data.frame
+  * `m` = multiple inputs
+  * `r` = repeat multiple times
+  * `_` = nothing
 
 # <a name='functions'></a>Functions #
 
@@ -1207,6 +1418,8 @@ it quickly finds inside function f's environment.
  * First install asks you to specify a local mirror
  * Can pass a list of package names as well
  * RStudio : Menu option Tools > Install Packages
+ * Code to install only as needed:
+   * `require(myPackage) || install.packages("myPackage")`
 * `source("http://bioconductor.org/biocLite.R")` = loads a remote
   script for installing the Bioconductor packages
   * `biocLite()` = Installs **ALL** of Bioconductor
@@ -1493,6 +1706,47 @@ identical(anRle, myRle)
     mode when an error is thrown. You will be presented with a stack
     trace and can choose the frame you wish to inspect.
 
+### <a name='profiling'></a>Profiling ###
+
+* `system.time( arbitraryExpression )` = calculates the number of
+  seconds for arbitraryExpression to evaluate
+  * Useful when you want to time a specific block of code
+  * Returns an object of class `proc_time`
+  * Holds `system` (CPU), `user` and `elapsed` components.
+  * System and user times are broken into "self" and "child" components
+* `Rprof( profileFile )` = Deep profiling mode
+  * R must have been *compiled* with profiling support
+  * Do **not** mix system.time with Rprof
+  * Works by sampling the call stack
+    * Default sampling frequency is 20 msec
+    * Fast-running code will need shorter inteval (or may not benefit
+      from profiling in the first place)
+  * Raw output is not really useful, needs to be fed to `summaryRprof()`
+    * Data can be normalized `by.total` or `by.self`
+  * Will not profile C or Fortran code
+
+```R
+Rprof( filename = "myBenchmarks.txt" )
+slowCode()
+moreCode()
+Rprof( NULL ) # Turns off profiling
+dontCareCode()
+# Turn profiling on again, append to previous file:
+Rprof("myBenchmarks.txt", append = TRUE)
+otherSlowCode()
+# It looks like you need to turn it off to write final data to file?
+Rprof(NULL)
+# Show all details:
+summaryRprof("myBenchmarks.txt")
+# Or just the "self" level:
+summaryRprof("myBenchmarks.txt")$by.self
+
+```
+
+* `install.packages("microbenchmark")` = Provides sub-millisecond
+  precision for timing.
+  * `library(microbenchmark)`; `microbenchmark( someExpression )`
+
 ### <a name='dataobject'></a>Programmer-like Objects ###
 
 That is, structuring complex objects as one might in other
@@ -1593,8 +1847,9 @@ kennel$dogs[[1]]$toys
 #### Specific Distributions ####
 
 * `<*>` = one of d/p/q/r
-* Logical flag `log` (`d`) and `log.p` (`p/q`) will report logarithms
-  of probabilities when true. Default is (always?) FALSE.
+* Logical flag `log` (for `d...`) and `log.p` (for `p...` or `q...`)
+  will report logarithms of probabilities when true. Default is
+  (always?) FALSE.
 * Logical flag `lower.tail` will report probabilites for `P[X <= x]`
   when TRUE (default), while FALSE reports `P[X > x]`
 
@@ -1877,3 +2132,10 @@ Not R *per se*, but these have been useful in making this document...
 [WpExponentialDist]: https://en.wikipedia.org/wiki/Exponential_function
 [WpMersenneTwister]: https://en.wikipedia.org/wiki/Mersenne_Twister
 [WpPRNG]: https://en.wikipedia.org/wiki/Pseudorandom_number_generator
+[ReadCsvForcedChar]: https://stackoverflow.com/questions/6616020/problem-with-specifying-colclasses-in-read-csv-in-r/6616047#6616047
+[xmlInR]: http://www.stat.berkeley.edu/%7Estatcur/Workshop2/Presentations/XML.pdf
+[jsonlite]: http://www.r-bloggers.com/new-package-jsonlite-a-smarter-json-encoderdecoder/
+[datatable]: https://www.datacamp.com/courses/data-analysis-the-data-table-way
+[datatablegithub]: https://github.com/Rdatatable/data.table
+[dfVSdt]: https://stackoverflow.com/questions/13618488/what-you-can-do-with-data-frame-that-you-cant-in-data-table
+[advmanip]: https://github.com/raphg/Biostat-578/blob/master/Advanced_data_manipulation.Rmd
