@@ -22,6 +22,14 @@
   * [Data Import](#import)
   * [Data Export](#export)
   * [Connections](#connections)
+  * [Databases](#databases)
+    * [ODBC](#rodbc)
+    * [PostgreSQL](#postgres)
+    * [MySQL](#mysql)
+    * [SQLite](#sqlite)
+* [Data Transformation](#transformation)
+  * [Sorting](#sorting)
+  * [dplyr](#dplyr)
 * [Control Structures](#control)
   * [if, else](#ifelse)
   * [for loops](#forloop)
@@ -186,6 +194,7 @@
   * For lists / vectors reports min, max, mean, median and quartiles
 * `head()` = report first n (default 10) lines of a list / vector /
   file / etc
+  * `tail()` = reports last n lines
 * `typeof()` = "storage mode" (basic class)
   * For a vector, reports the mode of the contents (ie not "vector")
 * `class()` = like typeof, but reports object classes (ie, inherited
@@ -200,6 +209,15 @@
     [behaves weirdly](#dataclassweird).
 * `summary()` = brief overview of object
   * Reports "NA" content
+* `quantile( myNumericVector, na.rm = FALSE)` = Report numeric values
+  within your vector residing at specific probabilities.
+  * `probs` = Specifies probability bins, default is `seq(0, 1, 0.25)`
+* `table( factors1, factors2, ... )` = Report summary counts for
+  factors or factorizable data.
+  * `as.table()` = will try to coerce the input to a table
+  * `is.table()` = will test input to see if it is a contingency table
+  * `use.NA = "ifany"` = Always useful to add, will include a count of
+    NA values (otherwise will not!)
 * `is.SOMETHING()` = class / type test method
   * eg `is.numeric()`
   * Returns a boolean indicating if the object "is" that thing
@@ -324,13 +342,15 @@ dt <- as.Date("1970-02-01")
 * `[` = returns an object of the same class, can select multiple elements. Simple example with a vector:
 
   ```R
-v <- c(12,6,7,22,19,5)
+v <- c(12,6,7,NA,19,5)
 v[3] # Get the third element
 v[c(3,5)] # Get third and fifth element
 v[2:4] # Elements 2,3,4
 v[v < 15] # All elements less than 15
 b <- v < 15 # b is a logical vector same length as v, reporting entries < 15
 v[b] # Will perform the same selection as two lines up
+# NA entries can be irritating; they return NA in booleans, too
+v[which(b)]  # Use which() to avoid them
   ```
   
   * Single brackets are needed for accessing multiple elements from a list
@@ -616,12 +636,17 @@ In v - x : longer object length is not a multiple of shorter object length
     (same number of rows)
   * Like a list, but unlike a matrix, a data frame can be
     heterogeneous; Each column can be a different data type
+  * Popularly abbreviated **DF**.
 * Every row is named (attribute `row.names`)
   * These names are preserved when subsetting.
 * `data.matrix()` = convert to matrix
 * Creation
   * `read.table()` [see below](#import)
   * `data.frame( col1, col2, ... )` = direct generation
+  * `myDF$myCol <- myVector` = Assigns myVector to the column myCol in
+    DF myDF
+    * `myDF <- cbind( myDF, myCol = myVector )` = Same as above
+  * `rbind(DF1, DF2)` = Appends rows, columns must be identical
 
 ##### <a name='datatable'></a>Data Tables #####
 
@@ -931,6 +956,190 @@ In v - x : longer object length is not a multiple of shorter object length
   the alternate clipboard.
 * Session limit of 125 user connections
 
+### <a name='databases'></a>Databases ###
+
+* Some packages will mask one another; For example, `dbApply()` in
+  both RPostgreSQL and RMySQL. Be careful if using two or more
+  database architectures.
+
+#### dbConnect ####
+
+* Higher-level supporting package
+* Comes with MySQL by default?
+  * Specific database driver support below
+* The number of simultaneous connections appears to be 10 (per
+  driver?)
+
+```R
+# Change for the DB architecture you use:
+library(RPostgreSQL)
+
+# Establish a connection object
+# The first argument is the driver, match to the DB architecture
+con <- dbConnect(PostgreSQL(), user="username", db="mydb", port="5433",
+                    host="example.com")
+                    
+# Build and execute a SQL statement:
+sql <- "SELECT * FROM tags WHERE tag LIKE 'ran%'"
+# GetQuery will execute the SQL and return the results
+ranTags <- dbGetQuery(con, sql)
+# The returned object is a DF with matched column headers
+ranTags
+        tag       name url_id     ldap
+1    random     Random      4 tilfordc
+2 randomtag random tag      3 tilfordc
+
+# SendQuery will get a results object:
+rs <- dbSendQuery(con, "SELECT * FROM tags")
+# Fetch then recovers a set of rows as a DF from the query:
+dbFetch(rs, n = 1)
+      tag    name url_id     ldap
+1 testing testing      1 tilfordc
+# ClearResult closes the statement
+dbClearResult(rs)
+
+# column headers will honor AS remappings:
+sql <- "SELECT tag, name AS NiceName FROM tags WHERE tag = 'bioperl'"
+colMap <- dbGetQuery(con, sql)
+colMap
+      tag nicename
+1 bioperl  BioPerl
+
+# If you wanted to the entire table could be read:
+fullTable <- dbReadTable(con, "tags")
+
+# Close the connection
+dbDisconnect(con)
+```
+
+* t looks like *some* [drivers support placeholders][SqlPlaceholders]
+  using `dbGetPreparedQuery()`, but apparently not all
+
+Utility methods:
+
+```R
+# For convienence in calls below:
+myDriverObj  <- PostgreSQL() 
+myDriverName <- "PostgreSQL"
+# con is presumed to be a connection to your database
+dbListTables(con) # Character vector of all tables in schema
+dbListFields(con, "myTable") # List columns in a table
+dbListConnections( myDriverObj ) # List of currently open connections
+dbListResults(con) # List of pending results
+dbExistsTable(con, "tableName" ) # Logical test for table
+dbIsValid(con) # Logical check if the connection is still ok
+dbQuoteString(con, "A'B\"C\\") # Escapes SQL characters
+dbGetInfo(resultObject) # Information about a live result
+dbDataType(con, "hello world") # Get the database value type for the R object
+                               # eg TRUE -> "bool", 1.3 -> "float8"
+# Not all drivers are fully compliant. This method will show the functions
+# that may be missing or non-compliant:
+dbiCheckCompliance( myDriverName )
+```
+
+##### <a name='postgres'></a>PostgreSQL #####
+
+* Setup: `install.packages("RPostgreSQL")`
+  * On Ubuntu/Debian needs: `sudo apt-get install libpq-dev`
+* Usage: `library(RPostgreSQL)`
+
+##### <a name='mysql'></a>MySQL #####
+
+* Setup : `install.packages("dbConnect")`
+  * On Ubuntu/Debian [needs][mysqlDebian]: `sudo apt-get install libmysqlclient-dev`
+* Usage : `library(dbConnect)`
+
+##### <a name='sqlite'></a>SQLite #####
+
+[SQLite][SqliteWP] is a very cool light-weight database. It is
+efficient, fast, and generally fully SQL-compliant.
+
+* Setup : `install.packages("RSQLite")`
+* Usage : `library(RSQLite)`
+* [dplyr](#dplyr) includes its own support for SQLite:
+
+  ```R
+  library("dplyr")
+  library("nycflights13")
+  my_db <- src_sqlite("mySQLiteFile.sqlite3", create = T)
+  copy_to(my_db, flights, temporary = FALSE, indexes = list(
+          c("year", "month", "day"), "carrier", "tailnum"))
+  ```
+
+  * `src_sqlite(path, createFlag)` = Connect to a SQLite database
+    file, creating it if needed (and allowed)
+  * `copy_to(dest, myDataFrame)` = when `dest` is a SQLite object,
+    will copy the provided data.frame into the DB
+
+##### <a name='rodbc'></a>Generalized ODBC #####
+
+[ODBC][OdbcWP] is a generalized interface to databases
+
+* Setup: `install.packages("RODBC")`
+  * On Ubuntu/Debian [needs][rodbcDebian]: `sudo apt-get install libiodbc2-dev`
+* Usage: `library(RODBC)`
+* Documentation: `RShowDoc("RODBC", package="RODBC")`
+* Your database needs to be configured to use ODBC
+
+# <a name='dplyr'></a>Data Transformation #
+
+* Helper package for working with [data frames](#dataframe)
+* Very fast
+* For all functions:
+  * The first argument is a data frame
+    * To be useful the input should be properly formatted / annotated
+  * Result will always be a new data frame
+  * Columns can be refered to "raw", as just the name (does not need $)
+
+### Basic "Verbs" ###
+
+* `select(df, cols)` = Pick a subset of the columns
+  * "cols" could be a wide range of column selectors. In additional to
+    traditional selections (ranges, quoted names) there are:
+    * `foo1:foo2` = Range from column named "foo1" to the one called "foo2"
+    * `-(c(foo3, bar6))` = Excluding columns named "foo3" and "bar6"
+* `filter()` = Pick a subset of the rows
+  * `filter(X, foo8 > 4 | bar1 < 10)` = Returns a data frame based on
+    X, mathematically filtered on the values of columns "foo8" and
+    "bar1"
+* `arrange()` = Re-order rows
+  * `arrange(X, foo1, desc(bar2))` = Sort by "foo1" ascending, "bar2"
+    descending
+* `rename()` = Change column names
+  * `rename(X, foo2 = Peanuts, bar7 = Weight )` = Rename "foo2" to
+    "Peanuts" and "bar7" to "Weight"
+* `mutate()` = Add new variables or columns, or alter existing ones
+  * 
+* `summarize()` = Create summary statistics
+
+### <a name='sorting'></a>Sorting ###
+
+* `sort( myVector, decreasing = FALSE, na.last = NA )` = sorts the
+  input values, returning a *vector of values*
+  * Makes use of `order()` under the hood
+  * Custom sort functions can be written for objects
+  * `decreasing` will sort from high-to-low when true
+  * `na.last` controls how NA values behave
+  * `partial` optional vector of indices to just sort part of input
+* `order(vec1, vec2, ... )` = sorts on one or more vectors, returning
+  a *vector of indices*
+  * Shares arguments with `sort()`
+  * Does not appear to support descending on some inputs and ascending
+    on others.
+* `arrange( myDF )` = [plyr](#plyr) function
+
+### <a name='dplyr'></a>dplyr ###
+
+* Setup: `install.packages("dplyr")`
+  * Sample data: `library(nycflights13)`
+* Usage: `library("dplyr")`
+   * Sample data: `library(nycflights13)`
+* Documentation: `"browseVignettes(package = "dplyr")"`
+
+* `arrange( myDF, variable )`
+  * Sorts a frame by the provided variable
+  * `desc()` = wrapper for descending sort
+  
 # <a name='control'></a>Control Structures #
 
 * Useful functions
@@ -1746,6 +1955,9 @@ summaryRprof("myBenchmarks.txt")$by.self
 * `install.packages("microbenchmark")` = Provides sub-millisecond
   precision for timing.
   * `library(microbenchmark)`; `microbenchmark( someExpression )`
+  * Note that the `unit` argument is set to dynamically adjust for the
+    actual benchmarks. To fix it, set `unit = "us"` (or some other
+    unit).
 
 ### <a name='dataobject'></a>Programmer-like Objects ###
 
@@ -1941,6 +2153,9 @@ plot(x,y)
 * There have been requests for
   [emacs keybindings in RStudio][RstudioEmacs] but they are no plans
   to implement it.
+* `vignette(all = FALSE)` = Get a list of all vignettes in attached
+  packages.
+  * `vignette(all = TRUE)` = List **ALL** vignettes
 
 ### <a name='makeexamp'></a>Generating Examples ###
 
@@ -2139,3 +2354,8 @@ Not R *per se*, but these have been useful in making this document...
 [datatablegithub]: https://github.com/Rdatatable/data.table
 [dfVSdt]: https://stackoverflow.com/questions/13618488/what-you-can-do-with-data-frame-that-you-cant-in-data-table
 [advmanip]: https://github.com/raphg/Biostat-578/blob/master/Advanced_data_manipulation.Rmd
+[rodbcDebian]: https://superuser.com/questions/283272/problem-with-rodbc-installation-in-ubuntu
+[mysqlDebian]: https://superuser.com/questions/283272/problem-with-rodbc-installation-in-ubuntu
+[OdbcWP]: https://en.wikipedia.org/wiki/Open_Database_Connectivity
+[SqliteWP]: https://en.wikipedia.org/wiki/SQLite
+[SqlPlaceholders]: https://stackoverflow.com/questions/2186015/bind-variables-in-r-dbi
