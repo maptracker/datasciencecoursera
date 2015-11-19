@@ -1,4 +1,3 @@
-
 * [Fundamentals](#fundamentals)
   * [Syntax](#syntax)
     * [Non-obvious Operators](#oddop)
@@ -7,6 +6,7 @@
   * [Object Utility Methods](#objutil)
   * [Atomic Classes](#atomic)
   * [Date and Time](#datetime)
+    * [lubridate](#lubridate)
   * [Vectors, Matrices and Data Frames](#vecmat)
     * [Subsetting](#subsetting)
     * [Vectors](#vectors)
@@ -17,6 +17,7 @@
     * [Arrays](#arrays)
     * [Factors](#factors)
     * [Data Frames](#dataframe)
+  * [Formulae](#formula)
 * [Data Import and Export](#importexport)
   * [General File Manipulation](#filesystem)
   * [Data Import](#import)
@@ -29,7 +30,13 @@
     * [SQLite](#sqlite)
 * [Data Transformation](#transformation)
   * [Sorting](#sorting)
+  * [String Manipulation](#strings)
+    * [Regular Expressions](#regexp)
+    * [stringr](#stringr)
   * [dplyr](#dplyr)
+  * [reshape](#reshape)
+    * [melt](#melt)
+    * [cast](#cast)
 * [Control Structures](#control)
   * [if, else](#ifelse)
   * [for loops](#forloop)
@@ -43,8 +50,12 @@
     * [apply](#apply)
     * [tapply](#tapply)
       * [split](#split)
-    * [mapply](#mapply)
     * [plyr](#plyr)
+* [Graphics](#graphics)
+  * [Core Graphics](#coregraphics)
+  * [ggplot2](#ggplot2)
+  * [D3 Networks](#networkD3)
+  * [Image Packages](#images)
 * [Functions](#functions)
   * [Symbol Scoping](#scoping)
 * [Packages](#packages)
@@ -179,9 +190,11 @@
     * This is potentially dangerous and should probably not be used in
       practice.
 * Attributes
-  * `attributes()` can get and set values
+  * `attr()` can get and set values
   * names & dimnames, dimensions (matrices, arrays), class, length, etc
   * user-defined
+  * Setting attributes on a vector will cause it to be
+    [reported as "atomic" in str()][atomicstr].
 
 ### <a name='objutil'></a>Object Utility Methods ###
 
@@ -212,6 +225,10 @@
 * `quantile( myNumericVector, na.rm = FALSE)` = Report numeric values
   within your vector residing at specific probabilities.
   * `probs` = Specifies probability bins, default is `seq(0, 1, 0.25)`
+  * `cut2(myNumericVector, g = 4)` = cut the vector into 4 quantile
+    groups, represented as a factor, with names capturing the quantile
+    boundaries.
+    * This function is in `library(Hmisc)`
 * `table( factors1, factors2, ... )` = Report summary counts for
   factors or factorizable data.
   * `as.table()` = will try to coerce the input to a table
@@ -316,12 +333,17 @@
   * `strptime( dateString)` = Format date output, similar to sprintf.
   * `Sys.Date()` = Current date for the system's locale.
   * `Sys.time()` = System's time in POSIXct format
+    * `date()` = Current time as a character string, fixed format "%a
+      %b %d %H:%M:%S %Y"
   * `Sys.getlocale()` / `Sys.setlocale()` = get or set
   * `weekdays( dateObject )` = return the name of the day (eg "Sunday")
   * `months( dateObject )` = return month name
   * `quarters( dateObject )` = Quarter name (eg "Q3")
   * `julian( dateObject, origin = dateObject)` = get the difference in
-    days between two Dates.
+    days between a date and an origin (also a date).
+    * Default origin is Jan 1, 1970
+  * The generic `format()` method can be used to format output from
+    Date objects.
 * Date math
   * As long as the objects are the same classes, mathematical
     operations can be done.
@@ -331,6 +353,32 @@
 ```R
 dt <- as.Date("1970-02-01")
 ```
+
+#### <a name='lubridate'></a>lubridate ####
+
+Helper package for manipulating dates. **LOTS** of functions.
+
+* `library(lubridate)`
+  * [Tutorial on R-stats blog][lubridatetutorial]
+  * `vignette("lubridate")`
+  * First install with `install.packages("lubridate")`
+* `ymd()`, `mdy_hm()`, `dmy_hms()`, etc = Parsers for Year-Month-Day,
+  Month-Day-Year+Hour-Minute, Day-Month-Year+Hour-Minute-Second, etc.
+  * *Many* permutations pre-packaged
+  * Will look at non-numeric separators to extract components
+  * Vectorized, input needs to be in same order but not with same separators
+* `guess_formats( myDateStrings, orders = myOrders )` = Guess formats
+  used for specific date strings.
+  * `orders` = Appears to be detailed guidance for MonDay vs DayMon?
+* Period Class
+  * [S4 object](#s4) extending Timespan, tracks the difference between
+    two objects
+  * The period is generally undefined until anchored to a specific
+    reference; This is because "a year" has differing amount of time
+    (for example, days in leap years) depending on when it is set.
+  * Periods can be constructed "piecemeal" using functions like
+    `days()`, `years()`, `microseconds()` etc:
+    * `x <- as.POSIXct("2009-08-03") + day(12) + hours(3) + seconds(45)`
 
 ## <a name='vecmat'></a>Vectors, Matrices and Data Frames ##
 
@@ -441,6 +489,13 @@ v[which(b)]  # Use which() to avoid them
     * `seq(from = 1, to = length(x), length = length(x))` will
       provide what you need (`integer(0)`, an integer vector with no
       members).
+    * `seq(from, to, by = step)` = create a sequence from "from" to
+      "to", incrementing by "step" (may not reach "to" if there is a
+      modulus)
+    * `seq(from, to, length = len )` = "from".."to", with exactly
+      "len" equally spaced members.
+    * `seq(along = x)` = a sequence starting at 1, incremented by 1
+      with a length equal to the length of x.
 
 ##### <a name='vectorization'></a>Vectorization #####
 
@@ -604,6 +659,8 @@ In v - x : longer object length is not a multiple of shorter object length
     assignment is made independently by R; peach is 2, even though it
     was "first".
   * `levels(x)` = reports the factor names as ordered by integer value
+  * `as.numeric(x)` = explicitly extract the integer representation of
+    a factor.
   * If you want to set the factor order explicitly, the `levels`
     argument can be used:
     
@@ -627,7 +684,7 @@ In v - x : longer object length is not a multiple of shorter object length
    [1] alpha alpha alpha alpha beta  beta  beta  beta  gamma gamma gamma gamma
   Levels: alpha beta gamma
   ```
-    
+
 #### <a name='dataframe'></a>Data Frames ####
 
 * Special form of list
@@ -685,6 +742,47 @@ In v - x : longer object length is not a multiple of shorter object length
 * `fread( myFile )` = Fast read of a data.table.
   * In addition to being faster than `read.table()`, the defaults look
     to be different (such as `stringsAsFactors` being false for DT).
+
+# <a name='formula'></a>Formulae #
+
+* Can construct with `formula()`, or by directly using `~` notation
+  * Can also call `as.formula()` on string representations
+* Will have `class` "formula, `typeof` "language" and `mode` "call".
+* Left argument is optional. Not sure what it means if it is missing.
+* Has three subsets:
+  * `[[1]]` = The "~" operator.
+  * `[[2]]` = The left argument, if it was provided. Otherwise the
+    right argument.
+    * Ewwww. Seems accident prone.
+  * `[[3]]` = The right argument if a left argument was
+    provided. Otherwise throws an error.
+* Include their own [environment](#scoping).
+* Operators
+  * `~` = Basic "equals" operator, eg `y ~ a + b`
+  * `+` = Separates terms in the model
+  * `:` = Indicates interaction between terms in the model
+  * `*` = Inidcates crossing between terms
+    * = `a*b` = `a + b + a:b`
+  * `^` = Indicates crossing to the indicated order
+    * `(a+b+c)^3` = `(a+b+c)*(a+b+c)*(a+b+c)` =
+      `a + b + c + a:b + b:c + a:c + a:b:c`
+  * `-` = Excludes terms from the model
+    * Useful to remove expansion from `:` or `^`.
+    * Also pointed out that `- 1` will remove the intercept term in a
+      linear model, specifying that the model crosses at zero.
+  * `.` = Usually means "all columns not otherwise in the formula"
+    * When used in `update.formula`, means "what was previously in
+      this part of the formula"
+  * `I()` = Used to escape notation that would otherwise be
+    interpreted as one of the operators above. `I(a + b)` is equal to
+    "a mathematically-added-to b" as opposed to "term a with term b"
+* `plot()` has a function dedicated to formulae input
+  * I am finding it somewhat perplexing.
+* There is the infuriatingly named `Formula` package
+  but is distinct from `formula`
+  * `vignette("Formula")`
+  * `|` = Special operator only used by "Formula"; Separates multiple
+    parts of the formula
 
 # <a name='importexport'></a>Data Import and Export #
 
@@ -795,7 +893,6 @@ In v - x : longer object length is not a multiple of shorter object length
     file. Returns logical "success vector"
   * `file.link( from, to )` = Create a hard link to a file. Returns
     logical "success vector"
-  
 
 ### <a name='import'></a>Data Import ###
 
@@ -978,7 +1075,7 @@ library(RPostgreSQL)
 # The first argument is the driver, match to the DB architecture
 con <- dbConnect(PostgreSQL(), user="username", db="mydb", port="5433",
                     host="example.com")
-                    
+
 # Build and execute a SQL statement:
 sql <- "SELECT * FROM tags WHERE tag LIKE 'ran%'"
 # GetQuery will execute the SQL and return the results
@@ -1081,7 +1178,7 @@ efficient, fast, and generally fully SQL-compliant.
 * Documentation: `RShowDoc("RODBC", package="RODBC")`
 * Your database needs to be configured to use ODBC
 
-# <a name='dplyr'></a>Data Transformation #
+# <a name='transformation'></a>Data Transformation #
 
 * Helper package for working with [data frames](#dataframe)
 * Very fast
@@ -1090,27 +1187,6 @@ efficient, fast, and generally fully SQL-compliant.
     * To be useful the input should be properly formatted / annotated
   * Result will always be a new data frame
   * Columns can be refered to "raw", as just the name (does not need $)
-
-### Basic "Verbs" ###
-
-* `select(df, cols)` = Pick a subset of the columns
-  * "cols" could be a wide range of column selectors. In additional to
-    traditional selections (ranges, quoted names) there are:
-    * `foo1:foo2` = Range from column named "foo1" to the one called "foo2"
-    * `-(c(foo3, bar6))` = Excluding columns named "foo3" and "bar6"
-* `filter()` = Pick a subset of the rows
-  * `filter(X, foo8 > 4 | bar1 < 10)` = Returns a data frame based on
-    X, mathematically filtered on the values of columns "foo8" and
-    "bar1"
-* `arrange()` = Re-order rows
-  * `arrange(X, foo1, desc(bar2))` = Sort by "foo1" ascending, "bar2"
-    descending
-* `rename()` = Change column names
-  * `rename(X, foo2 = Peanuts, bar7 = Weight )` = Rename "foo2" to
-    "Peanuts" and "bar7" to "Weight"
-* `mutate()` = Add new variables or columns, or alter existing ones
-  * 
-* `summarize()` = Create summary statistics
 
 ### <a name='sorting'></a>Sorting ###
 
@@ -1128,6 +1204,199 @@ efficient, fast, and generally fully SQL-compliant.
     on others.
 * `arrange( myDF )` = [plyr](#plyr) function
 
+### <a name='strings'></a>String Manipulation ###
+
+* `tolower( myCharVec )` = Lowercase
+* `strsplit( myCharVec, split = myRegExp)` = Split strings based on
+  one or more regular expressions.
+  * `fixed` = Default "FALSE", if TURE then `split` will be
+    interpreted literally rather than as a regexp.
+  * `perl` = Default "FALSE", if TRUE then use Perl RegExp rules.
+* `nchar(myText)` = Count number of characters
+* `paste( Obj1, Obj2, ..., sep = ",", collapse = ". ")` = Concatenates
+  objects (stringifying them if needed). Vectorized operation.
+  * `sep` = Separator to use between objects
+  * `collapse` = Default NULL (do not collapse). If non-NULL then the
+    provided string will be used to collapse all final results into a
+    single string.
+  * `paste0()` is a convienence function with `sep = ""` (empty string)
+* `cat(Obj1, Obj2, ..., sep = mySep, file = myFile )` = Concatenate
+  objects to a file
+  * `file` = A [connection](#connections) or a file name. If set to
+    `""` then will be sent to the standard output. If `|someCommand`
+    then will be piped to someCommand.
+  * `sep` = Separating string between objects
+  * `fill` = default FALSE. If TRUE, then newlines will be added
+  * `append` = If TRUE, and `file` is a file path, then append the
+    output rather than clobbering the file.
+* `sprintf(myFormat, Obj1, Obj2, ...)` = Full access to C's sprintf
+* `formatC( myObject, <lots of options>)` = Fine-grained formatting
+  control of a single vector
+  * `digits` = Number of digits after decimal point
+  * `width` = Total field width
+  * `format` = Specifies type of object
+    * `d` = integers
+    * `f` = 'xxx.xxx', `fg` = same, but interprets `digits` as number
+      of *significant* digits.
+    * `e` = 'n.ddde+nn', `E` = 'n.dddE+nn', `g`/`G` = same as e/E, but
+      will only use scientific notation if it saves space.
+    * `s` = strings
+  * `zero.print` = Optional character for zeros, handy if you want to
+    hide them in a sparse matrix.
+  * `drop0trailing` = Removes trailing zeros and "e+00"
+  * `...` = Additional arguments are passed on to format (below)
+  * `prettyNum(myObject, ...)` = specifically for numbers
+* `format(myObject, <lots of options>)` = More formatting! High-level
+  function used for pretty printing in R
+  * [Subclassing](#s3classes) of format() can be used to customize
+    pretty printing of objects.
+  * `trim` = default FALSE, if TRUE will remove padding spaces
+  * `nsmall` = "minimum number of digits to the right of the decimal point"
+  * `justify` = One of left/right/centre/none, used for character vectors
+* `ngettext(n = numThings, msg1 = fmtOne, msg2 = fmtNotOne)` = Cute
+  function that automatically applies plural values to a string
+  `gettext(4, "You see %d mouse.", "You see %d mice.")`
+  * `gettext()` = Still not really sure what this one does.
+
+#### <a name='regexp'></a>Regular Expressions ####
+
+The default (`fixed = FALSE, perl = FALSE`) uses
+[POSIX 1003.2 extended regular expressions][posixre].
+
+* **Common Arguments**
+  * `ignore.case` = Default "FALSE", which will force matches to be
+    case-specific.
+  * `perl` = Default "FALSE". If TRUE, then use
+    [Perl Compatible Regular Expressions][pcre]
+  * `fixed` = Default "FALSE". If TRUE, then do not treat the pattern
+    as a regular expression, but as a fixed string.
+  * `useBytes` = Default "FALSE", which matches character by
+    character.
+* `grep(myRegExp, myText)` = looks for matches of the pattern in
+  myText.
+  * `value = FALSE` (default) returns a numeric vector indicating the indices of
+    myText that matched
+  * `value = TRUE` returns a character vector of the elements in
+    myText that matched.
+  * `invert = TRUE` will return non-matches instead
+* `grepl(myRegExp, myText)` = like grep, but returns a logical vector
+  of same length as myText.
+* `sub(myRegExp, repText, myText)` = Replaces the first occurance of
+  myRegExp with repText in each string in myText
+* `gsub()` = Same as above, but replaces *all* occurances in each
+  string ("g" = "global")
+* `regexpr(myRegExp, myText)` = Returns an integer vector of same
+  length as myText containing the character position of the first
+  match of myRegExp. "No match" are represented as `-1`. The vector
+  includes two additional attributes:
+  * `match.length` = An integer vector reporting the number of
+    characters involved in the match, again with -1 representing "no
+    match"
+  * `useBytes` = Logical flag reflecting the value passed
+* `gregexpr(myRegExp, myText)` = Like above, but returns a *list* of
+  same length as myText, each element being an attributed-vector of
+  the same format provided by `regexpr`, reporting *all* occurances of
+  matches in the string.
+* `myMatch <- regexec(myRegExp, myText)` = Used for parenthetical capture, the
+  return value will be a list the same length as myText, each value
+  being an attributed-vector similar to regexpr.
+  * `regmatches(myText, myMatch)` = Takes a text vector and the
+    matches generated by regexec, and returns the substrings (as a
+    simple character vector) corresponding to the matches.
+
+#### <a name='stringr'></a>stringr ####
+
+Set of `str_*` methods for sting manipulation. Most (all?) have an
+underlying `stri_*` method supporting them.
+
+* `library(stringr)`
+* `str_trim(myStrings, side = "both")` = Remove whitespace from edges
+  of string
+  * `side` = left/right/both
+  * White space includes tabs and newlines
+* `str_pad(myStrings, width = minWidth)` = Opposite of str_trim, adds
+  whitespace to pad out a string to the specified width
+  * `side` = Specifies which side(s) to pad
+  * `pad` = Default a space, but can be any single character
+* `str_dup(myStrings, times = x)` = Duplicate strings x times
+  (duplicates are concatenated with an empty string)
+* `str_c(vec1, vec2)` = Kind of like paste, but works off of two
+  vectors using [recycling](#recycling).
+  * `collapse` = If TRUE, then collapse to a single string
+  * `str_join()` = Is this an alias for str_c??
+* `str_order(myStrings)` = Returns an integer vector of the ordered
+  indices in myStrings.
+  * `decreasing` = Reverse ordering
+  * `na_last` = Default TRUE, will put `NA` at end of sort
+  * `str_sort()` = As above, but returns sorted input character vector
+* `str_sub( myStrings, start = myStarts, end = myEnds)` = Extract
+  substrings by coordinates.
+  * **All arguments** will use recycling to make the cookies and milk
+    come out even!
+  * `start` can be a two column matrix holding both start/end
+  *`str_sub(...) <- myReplacement` can be used to replace the
+  *substring with new values.
+* `str_wrap(myStrings)` = Wrap strings into a new length-constrained vector
+  * `width` = Default 80, maximum characters per string
+  * `indent` = Default 0, Optional left padding of first line
+  * `exdent` = Default 0, Optional left padding of lines 2+
+* Simple Utilities
+  * `str_to_upper(myStrings)` = "lower case"
+  * `str_to_lower(myStrings)` = "UPPER CASE"
+  * `str_to_title(myStrings)` = "Title Case"
+* `word( myStrings, start = myStarts, end = myEnds, sep = sepText)` =
+  Extract words from a vector of strings
+  * `sep` = Default a single space, the separator pattern
+  * `start` = Character(s) to start searching from. Negative numbers
+    count backqwards from end of string.
+  * `end` = Like start, default = start.
+* Regular Expression methods
+  * `str_count(myStrings, myPattern)` = Vectorized count of pattern
+    occurences in vector of strings
+    * `str_detect(myStrings, myPattern)` = As above but returns
+      logical vector
+      * `str_subset( myStrings, myPattern )` = identical to calling
+        `myStrings[str_detect(myStrings, myPattern)]`
+  * `str_extract(myStrings, myPattern)` = Looks for the pattern in the
+    input vector, returning a character vector of the same length. NA
+    will be used for no matches, otherwise the first match will be
+    reported.
+    * `str_extract_all(myStrings, myPattern)` = As above, but returns
+      a list of character vectors. No matches are empty vectors,
+      otherwise will hold all matches for each input.
+  * `str_replace( myStrings, myPattern, myReplace)` = Replaces the
+    first occurance of pattern in string vector.
+    * `str_replace_all()` = Replaces all occurances
+    * `str_replace_na( myStrings )` = Replaces `NA` with the string "NA"
+  * `str_locate(myStrings, myPattern)` = Recover start/end coordinates
+    for pattern match in a vector of strings.
+    * Return value is an integer matrix with as many rows as entries
+      in myStrings, and two named columns, "start" and "end"
+    * Non-matches will have `NA` for both columns
+    * Zero length matches will have end = start - 1
+    * `str_locate_all()` = As above, but returns a list of matrices
+    * `invert_match()` = Wrapper to go around str_locate output (or
+      only _all?) to invert the match coordinates for unmatched areas.
+  * `str_split(myStrings, myPattern)` = Returns a list of character
+    vectors, each representing the split of the input by the pattern.
+    * `n` = Maximum number of places to split, default infinite
+    * `str_split_fixed()` = As above, but treat pattern as fixed (not RegExp)
+  * RegExp modifying functions
+    * These functions can be wrapped around "pattern" in any of the
+      above methods
+    * `fixed()` = Force argument to be a fixed string, not a RegExp
+    * `boundary()` = Set `type` to one of character, line_break,
+      sentence or word.
+    * `coll()` = Something to do with collation
+    * `regexp()` = Seems to be the default wrapper? Maybe useful to
+      over-ride some settings, like "fixed"?
+* Nerdy technical stuff
+  * `str_length(myStrings)` = measures length of strings in
+    [code points][codepoint].
+  * `str_conv(myString, myEncoding)` = Change
+    [character encoding][charencode]
+
+
 ### <a name='dplyr'></a>dplyr ###
 
 * Setup: `install.packages("dplyr")`
@@ -1136,17 +1405,100 @@ efficient, fast, and generally fully SQL-compliant.
    * Sample data: `library(nycflights13)`
 * Documentation: `"browseVignettes(package = "dplyr")"`
 
-* `arrange( myDF, variable )`
-  * Sorts a frame by the provided variable
-  * `desc()` = wrapper for descending sort
-  
+#### Basic dplyr "Verbs" ####
+
+* `select(myDF, cols)` = Pick a subset of the columns
+  * "cols" could be a wide range of column selectors. In additional to
+    traditional selections (ranges, quoted names) there are:
+    * `foo1:foo2` = Range from column named "foo1" to the one called
+      "foo2"
+    * `-(c(foo3, bar6))` = Excluding columns named "foo3" and "bar6"
+* `filter()` = Pick a subset of the rows
+  * `filter(myDF, foo8 > 4 | bar1 < 10)` = Returns a data frame based
+    on myDF, mathematically filtered on the values of columns "foo8"
+    and "bar1"
+* `arrange()` = Re-order rows
+  * `arrange(myDF, foo1, desc(bar2))` = Sort by "foo1" ascending,
+    "bar2" descending
+    * `desc()` wrapper sets descending sort
+    * Note that this is more flexible than `order()`, which apparently
+      can only do all columns either ascending or descending.
+* `rename()` = Change column names
+  * `rename(myDF, Temperature = t, Mass = m )` = Rename "t" to
+    "Temperature" and "m" to "Mass"
+* `mutate()` = Add new variables or columns, or alter existing ones
+  * `mutate(myDF, xy = x * y)` = New column "xy" is product of "x" and
+    "y"
+* `group_by()` = Creates a subclass of the DF that is structured to
+  allow grouping by one or more columns
+  * `groups()` = returns a list of the groups assigned to the DF
+  * `ungroup()` removes grouping
+  * `n()` = Returns the number of observations within a group. It is
+    only functional within `summarise`, `mutate` and `filter`.
+* `summarize()` = Create summary statistics.
+  * Generates a new DF based on 
+
+### <a name='reshape'></a>reshape ###
+
+`reshape` is a core pacakge, while `reshape2` is an external update.
+
+* [GitHub Readme][reshape2github]: "Reshape2 is a reboot of the
+  reshape package ... This version improves speed at the cost of
+  functionality"
+
+#### <a name='melt'></a>melt ####
+
+* [R Bloggers][rblogmelt]: "The melt function takes data in wide
+  format and stacks a set of columns into a single column of data."
+* Turns "wide" tables into tall ones by splitting table into new rows
+  based on one or more columns
+  * `id` = Specifies one or more identifier columns
+  * `measure.vars` = Specifies the columns that should be broken out
+    into rows. Will be factorized. If not provided, it seems that all
+    factor columns are taken by default.
+* Returns a vanilla `data.frame` that includes the `id` columns, plus
+  two melted columns:
+    * `variable` = A factor indicating which column from
+      `measure.vars` is being shown
+    * `value` = The coresponding value from that column for this row
+
+```R
+library(reshape2)
+mtcars$carname <- rownames(mtcars)
+# In original dataset mpg and hp are separate columns:
+mtcars[mtcars$carname == "Mazda RX4", ]
+          mpg cyl disp  hp drat   wt  qsec vs am gear carb   carname
+Mazda RX4  21   6  160 110  3.9 2.62 16.46  0  1    4    4 Mazda RX4
+# Indicate that we wish these varaibles to be on separate rows
+carMelt <- melt(mtcars, id=c("carname","gear","cyl"),
+                measure.vars=c("mpg","hp"))
+# We now have a row for each distinct entry in mpg and hp:
+carMelt[carMelt$carname == "Mazda RX4", ]
+     carname gear cyl variable value
+1  Mazda RX4    4   6      mpg    21
+33 Mazda RX4    4   6       hp   110
+```
+
+#### <a name='cast'></a>cast ####
+
+* Takes melted data and summarizes the data by the melt variables.
+* `reshape2` uses `dcast()` for returning DFs (two dimensions) or
+  `acast()` to return a vector, matrix or array (2+ dimensions).
+* `dcast(myMeltedDF, myFormula, myAggregateFunc)`
+  * `data` = Must be a melted data.frame
+  * `formula` = "casting formula". Complex specification described in
+    help.
+  * `fun.aggregate` = Needed if your formula does not uniquely
+    identify rows in the data set. The function should accept a vector
+    of numbers and return a single statistic.
+
 # <a name='control'></a>Control Structures #
 
 * Useful functions
   * `seq( along.with = myObject )` = same as `seq_along(myObject)` =
     get an iteration of the things in myObject.
   * `length(myObject)` = get the total size / length of myObject
-  
+
 #### <a name='ifelse'></a>if, else ####
 
 ```R
@@ -1160,6 +1512,14 @@ size <- if (!is.numeric(x)) {
     "Large"
 }
 ```
+
+* There is also a formal `ifelse()` function, which is similar to
+  Perl's `condition ? ifTrue : ifFalse`:
+
+```R
+speed <- ifelse( atRedLight( myCar ), "stop", "go")
+```
+
 #### <a name='forloop'></a>for loops ####
 
 * Curly braces are not needed if the interior of the loop is a single
@@ -1222,8 +1582,12 @@ repeat {
   applying a function to either rows, columns or rows and columns.
 * Any `...` arguments will get passed on to the supplied function
   * Important to watch for argument name collisions here!
+* Potentially helpful links:
+  * [The Apply Family of Functions][ButtreyApply] - via Dr. Buttrey at
+    Naval Postgraduate School
 
-### <a name='lapply'></a>lapply() ###
+
+#### <a name='lapply'></a>lapply() ####
 
 ```R
 x <- list(x1 = 35:42, x2 = c(4:1, 2:5))
@@ -1238,7 +1602,7 @@ lapply( x,    mean )
 * An anonymous function can be provided "in-line" in the lapply()
   call.
 
-### <a name='sapply'></a>sapply() ###
+#### <a name='sapply'></a>sapply() ####
 
 * Designed to modify the returned value from lapply:
   * List of vectors of *uniform* length:
@@ -1271,7 +1635,7 @@ List of 3
     into the called function.
 * mapply is very useful in [vectorizing](#vectorization) a function
 
-### <a name='apply'></a>apply() ###
+#### <a name='apply'></a>apply() ####
 
 ```R
 x <- cbind(x1 = 35:42, x2 = c(4:1, 2:5))
@@ -1284,6 +1648,9 @@ apply( x,      2,         mean )
 * 'margin' is a flag indicating what apply should, uh, apply the
   function to:
   * `1` = rows
+    * This will work on lists (including data.frames) but in such
+      cases *each column must have identical modes*, because R will
+      coerce each row into a vector.
   * `2` = columns
   * `c(1,2)` = rows and columns
   * `c(1,3)` = First and third dimensions
@@ -1305,7 +1672,7 @@ apply( x,      2,         mean )
     NA entries from the calculation. Otherwise a single NA value in an
     operation will result in a final value of NA.
 
-### <a name='tapply'></a>tapply() ###
+#### <a name='tapply'></a>tapply() ####
 
 ```R
 x <- c(20,33,49,33,42,30,41,26,5,23)
@@ -1326,7 +1693,7 @@ y          i  j     k
   * Uses `split` (below) to break up the data. `tapply(x, f, mean)`
     &equiv; `lapply(split(x,f), mean)`
 
-#### <a name='split'></a>split() ####
+##### <a name='split'></a>split() #####
 
 ```R
 myData <- c(20,33,49,33,42,30,41,26,5,23)
@@ -1350,9 +1717,9 @@ $c
   * Argument `drop` (default FALSE) will cause any unrepresented
     factor levels to be excluded.
 
-### <a name='mapply'></a>mapply() ###
-
 ## <a name='plyr'></a>plyr ###
+
+See also [dplyr](#dplyr) above for the next-generation package.
 
 * `library(plyr)`
 * Formal combination of "split-apply-combine". Functions are of format
@@ -1363,7 +1730,50 @@ $c
   * `m` = multiple inputs
   * `r` = repeat multiple times
   * `_` = nothing
+* `join(xDF, yDF)` = Similar to SQL join
+  * `type` = One of left (default), right, inner or full.
+  * `by` = One or more common variable names to match on. If left out,
+    all common names will be used.
+  * `match` = Default "all", defines how to handle duplicates.
+  * `join_all(df1, df2, df3, ... )` = Recursively joins two or more DFs
 
+```R
+ddply(InsectSprays, .(spray), summarize, sum=sum(count))
+
+```
+
+# <a name='graphics'></a>Graphics #
+
+* Handy Examples
+  * [Analysis of Nobel Prize Data][NobelGraphics] - Very nice examples
+    mixing analysis of JSON objects with ggplot2
+
+## <a name='coregraphics'></a>Core Graphics ##
+
+* `boxplot()` = Uses a function to create a box-and-whiskers plot from
+  grouped data.
+  * `boxplot(count ~ spray, InsectSprays)`
+
+## <a name='ggplot2'></a>ggplot2 ##
+
+## <a name='networkD3'></a>D3 Networks ##
+
+"Creates D3 JavaScript network, tree, dendrogram, and Sankey graphs"
+
+* Installation: `install.packages("networkD3")`
+* Usage: `library("networkD3")`
+
+## <a name='images'></a>Image Packages ##
+
+* JPEG images
+  * `library(jpeg)`
+    * Install: `install.packages("jpeg")`
+  * `readJPEG( source = myImagePath)`
+    * `native` Default FALSE, which results in a 3D numeric array with
+      dimensions corresponding to channels * height * width. If TRUE,
+      then a 2D numeric array (W x H) with class "nativeRaster" is
+      created.
+  
 # <a name='functions'></a>Functions #
 
 * R will fail if you access a function with fewer arguments than it
@@ -1618,6 +2028,9 @@ parsing everything by name. So when `g()` is evaluated inside `f()`,
 and it encounters an expression using `z`, it will start following the
 environment search pattern to find the "nearest" instance of z, which
 it quickly finds inside function f's environment.
+
+* `with()` and `within()` = Methods to apply a function to data inside
+  a controlled environment
 
 # <a name='packages'></a>Packages #
 
@@ -2359,3 +2772,13 @@ Not R *per se*, but these have been useful in making this document...
 [OdbcWP]: https://en.wikipedia.org/wiki/Open_Database_Connectivity
 [SqliteWP]: https://en.wikipedia.org/wiki/SQLite
 [SqlPlaceholders]: https://stackoverflow.com/questions/2186015/bind-variables-in-r-dbi
+[ButtreyApply]: http://faculty.nps.edu/sebuttre/home/R/apply.html
+[NobelGraphics]: http://rpubs.com/neilfws/118756
+[rblogmelt]: http://www.r-bloggers.com/melt/
+[reshape2github]: https://github.com/hadley/reshape/blob/master/README.md
+[pcre]: http://www.pcre.org/
+[posixre]: http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html
+[atomicstr]: https://stackoverflow.com/questions/5809017/what-is-the-second-column-of-str-report-in-r-and-what-does-atomic-in-this-co
+[codepoint]: https://en.wikipedia.org/wiki/Code_point
+[charencode]: https://en.wikipedia.org/wiki/Character_encoding
+[lubridatetutorial]: http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/

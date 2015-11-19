@@ -86,5 +86,9 @@
   [coerce other modes AFTER reading](./Rnotes.md#quotedCoercion)
 * `read.table()` is convienent, but for large data files
   [scan() is MUCH faster](./Rnotes.md#import)
+* Be careful using "auto generated" names, such as column headers (eg
+  "V1" in `read.csv`). These might change as R evolves (eg
+  `reshape2::melt()` changed from [X1 to Var1][MeltColChange]).
 
 [Parsons1]: https://class.coursera.org/rprog-033/forum/thread?thread_id=224#post-1472
+[MeltColChange]: https://github.com/hadley/reshape/blob/master/README.md
