@@ -52,6 +52,7 @@
       * [split](#split)
     * [plyr](#plyr)
 * [Graphics](#graphics)
+  * [Devices](#devices)
   * [Core Graphics](#coregraphics)
   * [ggplot2](#ggplot2)
   * [D3 Networks](#networkD3)
@@ -111,7 +112,7 @@
     * These are **two different functions** in R
       * The right function is named "as is", that is just "dim"
       * The "real" name of the left function is `dim<-` (that is,
-        with the "<-" arrow tacked on), which R calls a "replacement
+        with the `<-` arrow tacked on), which R calls a "replacement
         method". Scott calls this "dim gets"
       * `?dim` will show you help for *both* methods
   * Not all functions follow this paradigm; For example, finding the
@@ -962,13 +963,13 @@ In v - x : longer object length is not a multiple of shorter object length
   * `myDoc <- xmlTreeParse( fileOrUrl )` = parses the tree into a structure
     * `htmlTreeParse()` = version of xmlTreeParse with defaults
       altered for HTML data.
-  * `xmlSApply( xmlNode, <xmlType> )`. "<xmlType>" is one of the naked
+  * `xmlSApply( xmlNode, <xmlType> )`. `<xmlType>` is one of the naked
     identifiers:
     * `xmlValue` = The text content of the nodes
     * `xmlAttrs` = Attributes assigned to the nodes
     * `xmlSize` = Number of child nodes
   * `xpathSApply( xmlNode, "<nodeSelector>", <xmlType> )` = Like
-    above, but "<nodeSelector>" is a quoted xpath node selection
+    above, but `<nodeSelector>` is a quoted xpath node selection
     syntax
 * `library(jsonlite)` - [jsonlite tutorial][jsonlite]
   * `jsonData <- fromJSON( myFileOrUrl )`
@@ -1723,7 +1724,7 @@ See also [dplyr](#dplyr) above for the next-generation package.
 
 * `library(plyr)`
 * Formal combination of "split-apply-combine". Functions are of format
-  `<in><out>ply`, where "<in>" and "<out>" are one of:
+  `<in><out>ply`, where `<in>` and `<out>` are one of:
   * `a` = array
   * `l` = list
   * `d` = data.frame
@@ -1748,11 +1749,290 @@ ddply(InsectSprays, .(spray), summarize, sum=sum(count))
   * [Analysis of Nobel Prize Data][NobelGraphics] - Very nice examples
     mixing analysis of JSON objects with ggplot2
 
+## <a name='devices'></a>Devices ##
+
+A "Device" is an output format / mechanism that allows R to display or
+write to a file graphical images. By default, R should have a "screen"
+device which opens a graphics window on your monitor. You will likely
+spend most of your graphics time in such windows, but eventually will
+want to preserve your output as a file. Devices allow you to write
+your data to disk as a particular file format.
+
+Device manipulation is less standardized than one might hope for. For
+example, `png` specifies the file path with "file", but `pdf` requires
+"filename" to be provided instead. In general, a device is opened by
+calling the specific function associated with it:
+
+
+Many devices can be **defined** at any time, but only one can be
+**active** at a time. 
+
+### Specific Devices ###
+
+I am skipping some of the more esoteric formats and focusing on the
+ones likely to be of utility.
+
+* `capabilities()` = This function will tell you which formats are
+  available on your specific system. It returns a named logical
+  vector, with the names referencing the different device formats.
+* `pdf` = Generates a PDF file. This is likely the most versatile as
+  standalone output, but unlike raw image formats it can't be readily
+  embeded in other files.
+  * `file` = The path to the output file. Alternatively, can be `|
+    myCommand`, where "myCommand" is a command line argument that will
+    take the PDF as input.
+  * `title` = PDF metadata field stored in the file
+  * `paper` = Default "a4", but can be other paper sizes
+* `png` = A lossless, compressed graphical format. Probably the best
+  choice for images that you wish to embed in other files.
+* `svg` = Vector (non-pixel) image format. Vector files can be scaled
+  to arbitrary resolution without becomming "jagged". For some uses,
+  this may be the most desirable output.
+* `postscript` = Another vector format
+* `jpeg` = A lossy graphics format. Will always have some graphical
+  artifacts due to its compression, and for most images you generate
+  will likely compress more poorly that png.
+
 ## <a name='coregraphics'></a>Core Graphics ##
 
+[ggplot2](#ggplot2) seems to be the sexy new graphics package, but the
+core graphics still offer a lot of reasonable functionality.
+
+### Formatting ###
+
+`par()` is used to set general graphical parameters. Can be called
+directly, but parameters are generally passed on to it transparently
+from specific plotting functions. The most interesting arguments are
+summarized below, see help page for full list and detials. Some
+parameters **must** be set with par(), however - they do not seem to
+throw errors when passed from a plotting function, but they're
+ignored.
+
+* `*.axis`, `*.lab`, `*.main`, `*.sub` = Fine tuning of parameters
+  related to axis values, axis labels, title and subtitle
+* Numeric values (eg `lend`) can also generally be passed as text (eg
+  either `2` or `square`)
+* par also has some read-only parameters that can be used to recover
+  information about the current graphics device; These are not shown
+  below.
+* I am somewhat confused by units. This is partly that scaling is
+  generally a universally irritating issue, but there are parts of the
+  documentation that are alien to me.
+* **Content Control**
+  * `lend` = Line end style. **0 = round**, 1 = butt, 2 = square
+  * `ljoin` = Line join style. **0 = round**, 1 = mitre, 2 = bevel
+  * `lty` = Line type. 0 = blank, **1 = solid**, 2 = dashed, 3 =
+    dotted, 4 = dotdash, 5 = longdash, 6 = twodash
+  * `lwd` = Line width
+  * `pch` = Token/symbol to use for plotting points. Integer values
+    0-25 correspond to internal presets, character values will use
+    that character. See [here][pchLookup] for a lookup table.
+  * `usr` = vector `c(x1, x2, y1, y2)` giving extremes of plot window
+    coordinates (?).
+* **Color Specification**
+  * The function `colors()` lists all (600+) recognized color names
+    (character strings) that can be used (eg "red", "mediumspringgreen")
+    * The naked string `transparent` can be used for a 100%
+      transparent color (useful for fills over existing data)
+      * Some functions will quietly map RGBA values to "transparent"
+        if the alpha channel is zero.
+  * `#RRGGBB` Hexadecimal specification, case insensitive (eg '#AA11ff')
+    * `#RRGGBBAA` = As above, but with alpha channel defined as well
+  * `rgb( red, green, blue, alpha)` = flexible specification including
+    setting transparency level (alpha: 0 = full transparency, 1 = full
+    opacity)
+    * Return values are hexidecimal character strings
+    * RGB and alpha values can be vectors of length over 1; This will
+      return a vector as long as the longest parameter, with recycling
+      occuring on any parameter shorter than the longest.
+  * `palette()` = A predefined set of colors (default 8
+    members). Passing an integer to a color parameter will recover
+    that index from the palette. Values greate than the length of the
+    palette will wrap (modulus).
+    * `palette( c('red', '#004400', rgb((1:10)/10, 0.5, 0, (1:3)/3)))` =
+      Sets the palette to a list of 12 colors
+  * `colRamp( mySetofColors)` = returns a function that maps values
+    from 0-1 to a gradient of RGB or RGBA values, returned as a
+    numeric matrix
+  * Gradient generators. These functions create a static list of RGBA
+    hex codes. All require the first parameter, "n", which specifies
+    the number of colors to generate
+    * `rainbow( )` = Like it says.
+    * `heat.colors( )` = 
+    * `terrain.colors( )` = 
+    * `topo.colors( )` = 
+    * `cm.colors( )` = 
+    * `( )` = 
+  * `library('RColorBrewer')` contains additional color utilities.
+* **Text Control**
+  * `adj` = Justification of text
+  * `cex` = font size magnification factor
+    * `cex.axis`, `cex.lab`, `cex.main`, `cex.sub`
+  * `crt` = character rotation (degrees). Non multiples of 90 could
+    get weird
+    * `srt` = string rotation, also degrees, also weird for not % 90.
+  * `family` = font family name
+  * `font` = integer defining font. Not sure how it relates to
+    `family`
+    * `font.axis`, `font.lab`, `font.main`, `font.sub`
+  * `lheight` = Height of lines (for multi-line formatting) **MUST
+    CALL WITH par()**
+  * `oma` = text margin size, vector (bottom, left, top, right). Units
+    "lines of text" **MUST CALL WITH par()**
+  * `omi` = text margin size, units inches **MUST CALL WITH par()**
+  * `ps` = point size of text **MUST CALL WITH par()**
+* **Axis Control**
+  * `lab` = vector of three values, `(NumXTicks, NumYTicks,
+    LabelLength)`. Kind of.
+  * `las` = style (orientation) of axis labels
+  * `tck`, `tcl` = Control length of tick marks
+  * `xaxp`, `yaxp` = Control of number of tick marks. Complex parsing,
+    see help.
+  * `xaxs`, `yaxs` = Pretty print controlling of axis interval calculations
+  * `xaxt`, `yaxt` = Type of axis. "n" = no axis, "s" = show
+  * `xlog`, `ylog` = Logical flag indicating if axis is logarithmic
+* **General Frame**
+  * `bg` = background color
+  * `bty` = box (frame) type
+  * `fg` = foreground (frame) color
+  * `fig` = vector of (x1, x2, y1, y2) defining the figure region
+    **MUST CALL WITH par()**
+    * `fin` = figure dimensions, in inches **MUST CALL WITH par()**
+  * `col` = default plotting color
+    * `col.axis`, `col.lab`, `col.main`, `col.sub`
+  * `din` = device dimensions (w, h) in inches
+  * `mai` = margin width (inches) **MUST CALL WITH par()**
+  * `mfrow`, `mfcol` = Divide the device into a grid ("lattice" /
+    "trellis") of two or more rows and/or columns. This allows
+    multiple plots ("figures") to be directed to a single device in a
+    tidy layout. **MUST CALL WITH par()**
+    * `mfg` = Specify which cell a figure should be written to. Two
+      element vector specifying (col, row). **MUST CALL WITH par()**
+    * If you have set up a grid with i x j elements, the plot will
+      wipe itself clean before plotting the i x j + 1 entry.
+  * `new` = default FALSE, which means that "high level" plot commands
+    should wipe the plot window clean. If you find your plots being
+    inexplicably erased, try passing `new = TRUE`. **MUST CALL WITH par()**
+  * `page` = boolean controlling if plot.new starts a new page.
+  * `pin` = Plot dimensions c(width, height) in inches **MUST CALL
+    WITH par()**
+  * `pty` = plot region to use, `s` = square, `m` = maximum **MUST
+    CALL WITH par()**
+  * `xpd` = Clipping region for plotting
+    * `FALSE` = Only show data in plot region
+    * `TRUE` = Only show data in figure region
+    * `NA` = Show everything (anything that falls in device region)
+
+### Coordinate Specification ###
+
+`xy.coords()` is a helper function that many plotting programs use to
+normalize one or more (x,y) coordinate pairs. The arguments are
+generally passed to it via `...` from the calling function.
+
+* `( x = myXcoords, y = myYcoords )` = Providing two arguments
+  presumes they are a pair of vectors, which must be of the same
+  length
+* `xlab`, `ylab` = Default "x", "y". These parameters define the names
+  of the x and y variables if the coordinates need to be extracted
+  from an object (for example, if a list was provided)
+* `( x = something )` = Without Y, x will be interpreted as providing
+  both x and y coordinates. Parsing depends on what "something" is:
+  * `xvar ~ yvar` = A formula is interpreted as describing the x and y
+    variable names to use.
+  * `myList` = A list will be inspected for columns named by the `xlab`
+    and `ylab` variables (default "x" and "y")
+  * `myMatrix` = The first column is taken as x, the second as
+    y. **Labels are ignored!** - it's really simply columns 1 and 2.
+  * `myDataFrame` = The first column is taken as x, the second as
+    y. **Labels are ignored!** - it's really simply columns 1 and 2.
+  * `myTimeSeries` = For a Time Series, x will be taken as the time,
+    and y the values.
+  * All other cases: x is coorced to a vector. y values are the values
+    of the vector, and x values are the vector indices.
+
+### Plotting Commands ###
+
+* `plot()` = Basic xy point plotting.
+  * Uses `xy.coords()` (above) to parse coordinate information
+  * `main`, `sub`, `xlab`, `ylab` = Titles and axis labels
+  * `type` = Plot type, a single character
+    * **p**oints
+    * **l**ines
+    * **b**oth points and lines, with the lines being truncated to
+      prevent overlap on the points.
+    * **c** = Like "both", but with only the lines - that is, the
+      truncated lines with the points left out.
+    * **o**verplotted = Like "both", but with full-lenght lines (no truncation)
+    * **h**istogram = lines are drawn from the bottom to each point
+    * **s**teps = Each subsequent point is connected to the prior one
+      by a "step", a horizontal and vertical line
+    * **S**teps = like "steps", but the rules determining if
+      horizontal or vertical are drawn first are inverted.
+    * **n**othing = Data not drawn. Presumably useful in some circumstances
+* `smoothScatter()` = Density scatterplot. Useful when you have a very
+  large number of xy information to plot. Rather than representing
+  individual points, this method will represent data as a colored
+  contour map.
+  * `nbin` = Specifies number of grid points (cells). Numeric vector
+    of length 1 (same for both axes) or 2 (different values for (x,y))
+  * `bandwidth` = smoothing parameter, again vector of length 1 or 2.
+  * `nrpoints` = How many "outliers" (points in areas of lowest
+    density) should be explicitly shown.
+  * `colramp` = function to return color map (?)
+  * `transformation` = function mapping density scale to color scale
+    
+    ```R
+    smoothScatter(faithful, pch = 4, nrpoints = 10, title = "Old Faithful",
+    xlab = 'Eruption Duration', ylab = 'Eruption Delay')
+    ```
+    
+* `contour()` = Create a _de novo_ contour plot, or add contours to an
+  existing one.
 * `boxplot()` = Uses a function to create a box-and-whiskers plot from
   grouped data.
   * `boxplot(count ~ spray, InsectSprays)`
+* `hist()` = Plots a histogram for a vector of values
+  * `breaks` = Default "Sturges", a string defining the breakpoint
+    algorithm. Can also be:
+    * A vector of values
+    * A function that returns a vector of breakpoints
+    * An integer defining the number of intervals
+    * A function that returns the number of intervals (integer)
+  * `freq` = Default "TRUE", which reports counts. If FALSE, will
+    report density between 0-1, summing to 1.
+  * `density`, `angle` = controls shading lines (default off)
+  * `col`, `border` = color of the bars and their borders
+  * `main`, `xlab`, `ylab` = Lables
+  * `plot` = default TRUE, if FALSE then a list of breaks and counts
+    is returned and no plot is made.
+
+
+
+### "Add-on" functions ###
+
+These functions do not generate a new plot, but instead add additional
+features to an existing one. If you attempt to call one without a plot
+being active, you get the error `plot.new has not been called yet`
+
+* `points()` = Add arbitrary xy points to a plot
+  * Uses `xy.coords()` (above) to parse data input
+  * Uses many of the parameters from `plot()` (above)
+* `lines()` = adds arbitrary line segments to a graph.
+  * Uses `xy.coords()` (above) to parse data input
+* `rug()` = Appends a 1-D plot of data to an existing plot.
+  * Handy little tick marks detailing where the data lie in an
+    otherwise summarized plot.
+* `abline( a = intercept, b = slope )` = Adds straight lines to a plot
+  * `coef` = Vector of two values, `c(a,b)`. That is, an alternate to
+    a and b separately
+  * `reg` = A regression object with a `coef` function. For example, a
+    value produced by `lm()`
+  * `h`/`v` = Vector of y/x values for drawing horizontal/vertical
+    lines
+  * `untf` = Default FALSE. If TRUE, then lines are drawn presuming
+    that most passed values are already transformed (for example if
+    the plot is log-transformed). `h` and `v` always refer to values
+    in the original data space.
 
 ## <a name='ggplot2'></a>ggplot2 ##
 
@@ -2029,8 +2309,19 @@ and it encounters an expression using `z`, it will start following the
 environment search pattern to find the "nearest" instance of z, which
 it quickly finds inside function f's environment.
 
-* `with()` and `within()` = Methods to apply a function to data inside
-  a controlled environment
+* `with()` and `within()` = Methods to "apply a function to data"
+  inside a controlled environment. For example, in this sample from
+  `?rug`, the column `faithful$eruptions` can be referenced just as
+  `eruptions`:
+
+```R
+require(stats)
+with(faithful, {
+    plot(density(eruptions, bw = 0.15))
+    rug(eruptions)
+    rug(jitter(eruptions, amount = 0.01), side = 3, col = "light blue")
+})
+```
 
 # <a name='packages'></a>Packages #
 
@@ -2782,3 +3073,4 @@ Not R *per se*, but these have been useful in making this document...
 [codepoint]: https://en.wikipedia.org/wiki/Code_point
 [charencode]: https://en.wikipedia.org/wiki/Character_encoding
 [lubridatetutorial]: http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/
+[pchLookup]: https://gist.github.com/maptracker/e23b3f3712065677ba24
