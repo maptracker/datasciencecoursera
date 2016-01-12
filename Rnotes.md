@@ -54,6 +54,7 @@
 * [Graphics](#graphics)
   * [Devices](#devices)
   * [Core Graphics](#coregraphics)
+  * [Lattice Graphics](#lattice)
   * [ggplot2](#ggplot2)
   * [D3 Networks](#networkD3)
   * [Image Packages](#images)
@@ -697,14 +698,21 @@ In v - x : longer object length is not a multiple of shorter object length
   * Popularly abbreviated **DF**.
 * Every row is named (attribute `row.names`)
   * These names are preserved when subsetting.
+
+#### Data Frame Operations #####
+
+* `read.table()` [see below](#import)
+* `data.frame( col1, col2, ... )` = direct generation
+* `myDF$myCol <- myVector` = Assigns myVector to the column myCol in
+  DF myDF
+  * `myDF <- cbind( myDF, myCol = myVector )` = Same as above
+* `rbind(DF1, DF2)` = Appends rows, columns must be identical
 * `data.matrix()` = convert to matrix
-* Creation
-  * `read.table()` [see below](#import)
-  * `data.frame( col1, col2, ... )` = direct generation
-  * `myDF$myCol <- myVector` = Assigns myVector to the column myCol in
-    DF myDF
-    * `myDF <- cbind( myDF, myCol = myVector )` = Same as above
-  * `rbind(DF1, DF2)` = Appends rows, columns must be identical
+* `newDF <- transform(myDF, ColA = Something, ColB = someAction(ColX), ... )`
+  * Similar to `with()`, allows context-constrained operations on a
+    DF. Will return a **new** data frame (ie, will not alter the
+    input) with new or modified columns based on the provided
+    arguments.
 
 ##### <a name='datatable'></a>Data Tables #####
 
@@ -1748,6 +1756,7 @@ ddply(InsectSprays, .(spray), summarize, sum=sum(count))
 * Handy Examples
   * [Analysis of Nobel Prize Data][NobelGraphics] - Very nice examples
     mixing analysis of JSON objects with ggplot2
+  * [R Graph Gallery][rgraphgallery] - Collection of examples from the lectures
 
 ## <a name='devices'></a>Devices ##
 
@@ -1797,6 +1806,11 @@ ones likely to be of utility.
 
 [ggplot2](#ggplot2) seems to be the sexy new graphics package, but the
 core graphics still offer a lot of reasonable functionality.
+
+* Pros : Fast, adequate for many needs
+* Cons : All formatting / planning must be done in advance, can't
+  alter aspects of a plot once they're already defined (like expanding
+  an axis to accomodate larger-ranged values)
 
 ### Formatting ###
 
@@ -1905,7 +1919,8 @@ ignored.
   * `mfrow`, `mfcol` = Divide the device into a grid ("lattice" /
     "trellis") of two or more rows and/or columns. This allows
     multiple plots ("figures") to be directed to a single device in a
-    tidy layout. **MUST CALL WITH par()**
+    tidy layout. mfrow will fill grid row-first, mfcol will fill
+    column-first. **MUST CALL WITH par()**
     * `mfg` = Specify which cell a figure should be written to. Two
       element vector specifying (col, row). **MUST CALL WITH par()**
     * If you have set up a grid with i x j elements, the plot will
@@ -1990,7 +2005,16 @@ generally passed to it via `...` from the calling function.
   existing one.
 * `boxplot()` = Uses a function to create a box-and-whiskers plot from
   grouped data.
-  * `boxplot(count ~ spray, InsectSprays)`
+  * `boxplot(formula = count ~ spray, data = InsectSprays)`
+    * Formula-based specification, where the left side of the formula
+      defines the y-axis values, and the right side defines the x-axis
+      groups.
+    * `data` should either be a data.frame or a list.
+  * `range` = Configures the extent of the whiskers, see help
+  * `notch` = If TRUE, then a notch is added around the median of each
+    box. Non-overlapping notches are "likely" to have different
+    medians.
+  * `add` = If TRUE, then add the plot to the current plot
 * `hist()` = Plots a histogram for a vector of values
   * `breaks` = Default "Sturges", a string defining the breakpoint
     algorithm. Can also be:
@@ -2022,6 +2046,18 @@ being active, you get the error `plot.new has not been called yet`
 * `rug()` = Appends a 1-D plot of data to an existing plot.
   * Handy little tick marks detailing where the data lie in an
     otherwise summarized plot.
+* `text()` = Add text to plots
+  * `label` = Vector of strings to be shown
+  * `x`, `y` = Vectors off plot coordinates where the text should go
+  * `col`, `font` = Color and font of text, can be vectors
+  * `cex` = size expansion factor, to scale font size up or down
+  * `pos` = Can be NULL, or one of (1, 2, 3 or 4), which specifies
+    that the text should be (below, left, above or right) of the
+    coordinate.
+* `mtext()` = Similar to text(), but adds text *outside* the plot (in
+  the margins).
+  * `text` = irritatingly different from `label`, but same thing - the
+    text to add.
 * `abline( a = intercept, b = slope )` = Adds straight lines to a plot
   * `coef` = Vector of two values, `c(a,b)`. That is, an alternate to
     a and b separately
@@ -2034,7 +2070,102 @@ being active, you get the error `plot.new has not been called yet`
     the plot is log-transformed). `h` and `v` always refer to values
     in the original data space.
 
+## <a name='lattice'></a>Lattice Graphics ##
+
+Derived from the "Trellis" package in S, builds on top of the `grid`
+package.
+
+* `library('lattice')`
+* Pros = Organizes many plots into one page
+* Cons = Awkward and unintuitive, must be done monolithically with no
+  later alterations
+* Generally take a formula as the first argument
+  * `xyplot(myYvar ~ myXvar | myCond1 * myCond2, myData)`
+    * Y axis will be from "myYvar", X axis from "myXvar"
+      * `y1 + y2 ~ x | a * b` = Both the left and right side of the
+        formula can use `+`, which then causes expansion to multiple
+        plots. In the above example, it will expand to both `y1 ~ x |
+        a * b` and `y2 ~ x | a * b` _in the same panel_; Overlaid with
+        different graphical parameters.
+    * "myCond1", "myCond2" are zero or more "conditioning variables" -
+      See below
+    * `myData` is a data.frame or list. If left out, the parent frame
+      will be used (?)
+* `trellis.par.set()` = Controls high-level parameters, which appear
+   to be very poorly documented; "The actual list of the components in
+   'trellis.settings' has not been finalized, so I'm not attempting to
+   list them here.". A corresponding `.get()` method exists.
+
+### Conditioning Variables ###
+
+Lattice will generate a grid of panels based on the conditioning
+variables, which come after the pipe (`|`) in the formula
+specification.
+
+* `myYvar ~ myXvar | myCond1 * myCond2` = Two conditioning variables,
+  "myCond1" and "myCond2"
+* Separated by `*` or `+` to indicate interactions between them.
+* Conditioning variables should be either factors or shingles.
+  * Characters are cooerced to shingles
+* `layout` = parameter controlling grid structure. A numeric vector of
+  length 2 or 3, `c(numCols, numRows, numPages)`.
+  * Default is cols = # levels for condition 1, rows = # levels for
+    condition 2.
+  * Default for only 1 variable is `c(0,n)`, where n is number of
+    levels. The zero causes the layout to find the best CxR
+    arrangement for the deviec aspect ratio (at time of plotting -
+    will not auto-rearange if a screen window is resized).
+  * `as.table` = Default FALSE. The layout normally starts in the
+    lower left, and adds panels left-to-right, bottom-to-top. Setting
+    this to TRUE will add top-to-bottom.
+* `shingle()` = A factor plus intervals.
+  * Used by many plots when handling conditioning
+
+### Lattice Plotting Functions ###
+
+* Univariate Plotting
+  * `densityplot()` =
+  * `histogram()` =
+  * `qqmath()` =
+  * Also listed as univariate, but help is under bivariate:
+    `barchart`, `stripplot`, `bwplot`, `dotplot`
+* Bivariate Plotting
+  * First argument can be a formula per above, or something else (?
+    see help)
+  * `xyplot()` = Scatterplot
+    * First variable _must_ be a formula.
+  * `barchart()` =
+  * `bwplot()` =
+  * `dotplot()` =
+  * `stripplot()` =
+  * `qq()` =
+* Trivariate Plotting
+  * `levelplot()` =
+  * `contourplot()` =
+  * `cloud()` =
+  * `wireframe()` =
+* Multivariate
+  * `splom()` =
+  * `parallel()` =
+
+### Lattice Examples ###
+
+```R
+library(datasets)
+library(lattice)
+airquality$MonName <- factor( month.abb[ airquality$Month], levels = month.abb)
+xyplot(Ozone ~ Wind | MonName, data = airquality, as.table = T)
+```
+
 ## <a name='ggplot2'></a>ggplot2 ##
+
+Attempt to combine best features of base and lattice graphics, while
+defining a flexible graphics language.
+
+* Pros
+  * Rich graphics language, intuitive by some measures
+  * Extensive defaults are generally "what you want"
+  * Plots may be constructed in steps, allowing sequential alterations
 
 ## <a name='networkD3'></a>D3 Networks ##
 
@@ -3074,3 +3205,4 @@ Not R *per se*, but these have been useful in making this document...
 [charencode]: https://en.wikipedia.org/wiki/Character_encoding
 [lubridatetutorial]: http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/
 [pchLookup]: https://gist.github.com/maptracker/e23b3f3712065677ba24
+[rgraphgallery]: http://gallery.r-enthusiasts.com/
