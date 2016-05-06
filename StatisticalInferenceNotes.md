@@ -142,6 +142,44 @@ X[as.character(chi)] / nrow(S)  # = 0.08333333
     * The distribution of averages will get more concentrated with
       higher sample sizes.
 
+## Variability
+
+* [Variance][WP_var]
+  * Written either as Var(X) or &sigma;^2
+  * A measure of spread. Given a mean of &mu; :
+    * Var(X) = E[ (X-&mu;) ^ 2 ] = E[ X^2 ] - E[ X ]^2
+    * Units are (units-of-distribution)-squared
+  * SDmean = sqrt( Var(X) ) = [Standard deviation][WP_stddev]
+    * Units are units-of-distribution
+  * Sample Variance
+    * sum( (X - Xavg)^2 ) / (n - 1)
+    * Sample StdDev = sqrt(Sample Variance)
+    * Like means, the variance of variance will constrict as more data
+      are sampled. The center of the distribution of values will be at
+      the population variance.
+* [Standard error][WP_stderr]
+  * SE = standard deviation of the sampling distribution of a statistic
+  * Generally applied to the mean:
+    * E[Xmean] = &mu;
+    * Var(Xmean) = &sigma;^2 / n
+      * Note that the variance goes to zero as n goes to infinity
+    * With a sample standard deviation of *s*
+      * SEmean = *s* / sqrt(n)
+        * &rarr; How variable are random n-sized samples taken from the population
+      * Compare to SD = &sigma; / sqrt(n) for the population
+
+
+### Code snippets from lecture
+
+```R
+nosim <- 1000 # Number of simulations
+n     <- 10   # sample size
+m     <- matrix(rnorm(nosim * n), nosim) # Matrix of samples (here from normal distribution)
+sampMean <- apply(m, 1, mean) # Use apply to efficiently get metric for simulated samples
+sd( sampMean )   # report StdDev
+hist( sampMean ) # Plot histogram
+```
+
 [WP_randvar]: https://en.wikipedia.org/wiki/Random_variable
 [WP_estimand]: https://en.wikipedia.org/wiki/Estimand
 [WP_Estimator]: https://en.wikipedia.org/wiki/Estimator
@@ -149,3 +187,6 @@ X[as.character(chi)] / nrow(S)  # = 0.08333333
 [WP_inference]: https://en.wikipedia.org/wiki/Statistical_inference
 [Description]: https://en.wikipedia.org/wiki/Descriptive_statistics
 [WP_Odds]: https://en.wikipedia.org/wiki/Odds#Statistical_usage
+[WP_stderr]: https://en.wikipedia.org/wiki/Standard_error
+[WP_stddev]: https://en.wikipedia.org/wiki/Standard_deviation
+[WP_var]: https://en.wikipedia.org/wiki/Variance
