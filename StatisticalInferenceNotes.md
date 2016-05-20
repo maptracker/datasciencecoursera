@@ -149,15 +149,18 @@ X[as.character(chi)] / nrow(S)  # = 0.08333333
   * A measure of spread. Given a mean of &mu; :
     * Var(X) = E[ (X-&mu;) ^ 2 ] = E[ X^2 ] - E[ X ]^2
     * Units are (units-of-distribution)-squared
-  * SDmean = sqrt( Var(X) ) = [Standard deviation][WP_stddev]
-    * Units are units-of-distribution
   * Sample Variance
     * sum( (X - Xavg)^2 ) / (n - 1)
-    * Sample StdDev = sqrt(Sample Variance)
     * Like means, the variance of variance will constrict as more data
       are sampled. The center of the distribution of values will be at
       the population variance.
+* [Standard deviation][WP_stddev]
+  * Describes how variable the population is
+  * SDmean = sqrt( Var(X) )
+    * Units are units-of-distribution
+    * Sample StdDev = sqrt(Sample Variance)
 * [Standard error][WP_stderr]
+  * Describes how variable sample averages are
   * SE = standard deviation of the sampling distribution of a statistic
   * Generally applied to the mean:
     * E[Xmean] = &mu;
@@ -168,16 +171,106 @@ X[as.character(chi)] / nrow(S)  # = 0.08333333
         * &rarr; How variable are random n-sized samples taken from the population
       * Compare to SD = &sigma; / sqrt(n) for the population
 
-
 ### Code snippets from lecture
 
 ```R
-nosim <- 1000 # Number of simulations
-n     <- 10   # sample size
+nosim  <- 1000  # Number of simulations
+n      <- 10    # sample size
+myDist <- rnorm # the distribution we will use
+simulate <- function(n = 10, nosim = 1000, distribution = rnorm) {
+
 m     <- matrix(rnorm(nosim * n), nosim) # Matrix of samples (here from normal distribution)
 sampMean <- apply(m, 1, mean) # Use apply to efficiently get metric for simulated samples
 sd( sampMean )   # report StdDev
 hist( sampMean ) # Plot histogram
+```
+
+# Distributions
+
+* [Bernoulli][Bernoulli]
+  * result of a binary outcome
+  * mean *p* -> Variance $p(1 - p)$
+  * PMF = $$P(X = x) =  p^x (1 - p)^{1 - x}$$
+* [Binomial][Binomial]
+  * Sum of Bernoulli trials
+* [Normal][Normal] aka Gaussian
+  * `N`, when &mu; = 0 and &sigma; = 1, it's a "standard" normal
+    distribution, `Z`
+    * Z[ -1&sigma; - +1&sigma; ] = ~68%
+    * Z[ -2&sigma; - +2&sigma; ] = ~95%
+    * Z[ -3&sigma; - +3&sigma; ] = ~99%
+    * Percentiles
+      *  10th = -1.28&sigma;
+      *   5th = -1.64&sigma;
+      * 2.5th = -1.96&sigma;
+      *   1st = -2.33&sigma;
+* [Poisson][Poisson]
+  * Used to model counts
+  * `P(X = x; &lambda;)` = &lambda;^x * e^-&lamda; / x!
+    * mean = &lambda;, variance = &lambda;
+    * Default distribution for modeling [contingency tables][contingency]
+    * Commonly used for survival analyses
+  * Modeling rates
+    * `X ~ Poisson(&lambda;t)`
+      * &lambda; = E[ X / t ] = expected count per unit of time
+      * t = total time monitored
+  * Note: Important to use the appropriate lambda!
+    * `ppois(x, y) != ppois(2*x, 2*y)`
+  * Can approximate binomials for large *n* + small *p*
+    * If `X ~ binomial(n, p)` use `&lambda; = np`
+    * The estimation savings appear to be modest?
+
+```R
+library(microbenchmark)
+size    <- 500000
+success <- 4000
+prob    <- 0.01
+mbm <- microbenchmark( binom = pbinom(success, size, prob),
+                       pois  = ppois(success, size * prob), times = 10000)
+mbm
+
+Unit: microseconds
+  expr   min     lq     mean median     uq     max neval
+ binom 3.739 5.2215 5.888463  5.702 6.1850 135.254 10000
+  pois 4.385 5.9280 6.607649  6.428 6.9185  27.042 10000
+```
+
+# Asymptotics
+
+* Behavior of statistics as sample size approaches infinity
+* [Law of Large Numbers][LoLN] aka "LLN"
+  * The average of a sample "limits to" the population mean
+* An estimator is **consistent** if it converges to the expected value
+* [Central Limit Theorem][CLT]
+  * The sample average is normally distributed, with a mean
+    approaching that of the population mean.
+
+# Confidence Intervals
+
+* &plusmn;2 &sigma; (two standard deviations on either side of mean)
+  covers ~95% of a normal distribution.
+* [Binomial proportion confidence interval][BPCI] aka "Wald interval"
+  *
+* A "conservative" confidence interval is one that is designed to
+  assure an "adequately broad" interval that has a high(er) likelihood
+  of representing your confidence ranges, but may be broader than
+  neccesary.
+* Poisson example from lecture: A device fails 5 times in 94.32
+  days. What is the 95%CI for the daily failure rate?
+
+```R
+x      <- 5
+t      <- 94.32
+lambda <- x/t      # lambda-hat = Estimate of failure rate
+varLam <- lambda/t # Variance of lambda-hat
+round(lambda +       # Center of distribution
+      c(-1, 1) *     # Get left and right sides
+      qnorm(0.975) * # 97.5 percentile for standard normal distribution
+      sqrt(varLam),  # The standard error
+      3)             # Rounding to three places
+
+# Conservative "exact" interval
+poisson.test(x, T = t) # Interval stored in $conf.int
 ```
 
 [WP_randvar]: https://en.wikipedia.org/wiki/Random_variable
@@ -190,3 +283,13 @@ hist( sampMean ) # Plot histogram
 [WP_stderr]: https://en.wikipedia.org/wiki/Standard_error
 [WP_stddev]: https://en.wikipedia.org/wiki/Standard_deviation
 [WP_var]: https://en.wikipedia.org/wiki/Variance
+
+[Bernoulli]: https://en.wikipedia.org/wiki/Bernoulli_distribution
+[Binomial]: https://en.wikipedia.org/wiki/Binomial_distribution
+[Normal]: https://en.wikipedia.org/wiki/Normal_distribution
+[Poisson]: https://en.wikipedia.org/wiki/Poisson_distribution
+[Kaplan–Meier]: https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator
+[contingency]: https://en.wikipedia.org/wiki/Contingency_table
+[Law of Large Numbers]: https://en.wikipedia.org/wiki/Law_of_Large_Numbers
+[CLT]: https://en.wikipedia.org/wiki/Central_limit_theorem
+[BPCI]: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
