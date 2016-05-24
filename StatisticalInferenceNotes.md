@@ -245,12 +245,11 @@ Unit: microseconds
   * The sample average is normally distributed, with a mean
     approaching that of the population mean.
 
-# Confidence Intervals
+# [Confidence Intervals][CI]
 
 * &plusmn;2 &sigma; (two standard deviations on either side of mean)
   covers ~95% of a normal distribution.
 * [Binomial proportion confidence interval][BPCI] aka "Wald interval"
-  *
 * A "conservative" confidence interval is one that is designed to
   assure an "adequately broad" interval that has a high(er) likelihood
   of representing your confidence ranges, but may be broader than
@@ -273,6 +272,64 @@ round(lambda +       # Center of distribution
 poisson.test(x, T = t) # Interval stored in $conf.int
 ```
 
+# T Confidence Intervals
+
+* If you have a reasonable option between the Z-interval (discussed
+  above) and a T-interval, use the T-interval; It will approach the
+  Z-interval with enough data anyway.
+
+### T-distribution
+
+* Normal distribution is defined by mean and SD. t-distribution is
+  defined by [degrees of freedom][df]. 
+  * `(X-bar - &mu;) / (S / sqrt(*n*))`
+    * ... for n-1 degrees of freedom
+    * The t-distribution is using the standarad error, S. The normal
+      distribution instead uses &sigma;, the standard deviation.
+    * Using a standard normal for small values of *n* can result in
+      confidence intervals that are too narrow. This is because with
+      few degrees of freedom the t-distribution has "thicker tails".
+    * As n approaches &inf; the t-distribution approaches a normal
+      distribution.
+    * CI = X-bar &plusmn; t(n-1) * S / sqrt(N)
+      * t(n-1) = t quantile for n-1
+* Notes taken directly from [lecture summary][L06.08]:
+  * The t-interval technically assumes that the data are iid normal,
+    though it is robust to this assumption
+  * It works well whenever the distribution of the data is roughly
+    symmetric and mound shaped
+  * Paired observations are often analyzed using the t-interval by
+    taking differences
+  * For skewed distributions, the spirit of the t-interval
+     assumptions are violated
+     * Also, for skewed distributions, it doesn't make a lot of sense
+       to center the interval at the mean
+     * In this case, consider taking logs or using a different summary
+       like the median
+     * For highly discrete data, like binary, other intervals are
+       available
+
+```R
+# Using sleep data set
+g1 <- sleep$extra[ sleep$group == 1 ] # First group
+g2 <- sleep$extra[ sleep$group == 2 ] # Second group
+difference = g2 - g1   # Difference between groups
+n  <- length(g1)       # Number of observations
+mn <- mean(difference) # Average difference
+s  <- sd(difference)   # Standard deviation 
+mn +              # Center of distribution
+  c(-1, 1) *      # Left and right sides
+  qt(.975, n-1) * # 97.5 percentile for t distribution with 9 DF
+  s / sqrt(n)     # Standard error
+
+## Built-in mechanisms for assessing t distribution
+t.test(g2, g1, paired = TRUE) # Provide the two groups
+t.test(difference)            # Provide the deltas
+## Provide a formula specifying the relationship
+t.test(extra ~ group, paired = TRUE, data = sleep)
+## In course notes group was processed with I(relevel(group, 2))
+```
+
 [WP_randvar]: https://en.wikipedia.org/wiki/Random_variable
 [WP_estimand]: https://en.wikipedia.org/wiki/Estimand
 [WP_Estimator]: https://en.wikipedia.org/wiki/Estimator
@@ -293,3 +350,6 @@ poisson.test(x, T = t) # Interval stored in $conf.int
 [Law of Large Numbers]: https://en.wikipedia.org/wiki/Law_of_Large_Numbers
 [CLT]: https://en.wikipedia.org/wiki/Central_limit_theorem
 [BPCI]: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
+[CI]: https://en.wikipedia.org/wiki/Confidence_interval
+[df]: https://en.wikipedia.org/wiki/Degrees_of_freedom_%28statistics%29
+[L06.08]: https://github.com/bcaffo/courses/blob/master/06_StatisticalInference/08_tCIs/index.md#notes-about-the-t-interval
