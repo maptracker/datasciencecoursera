@@ -282,17 +282,21 @@ poisson.test(x, T = t) # Interval stored in $conf.int
 
 * Normal distribution is defined by mean and SD. t-distribution is
   defined by [degrees of freedom][df]. 
-  * `(X-bar - &mu;) / (S / sqrt(*n*))`
+  * (X-bar - &mu;) / (S / sqrt(*n*))
     * ... for n-1 degrees of freedom
-    * The t-distribution is using the standarad error, S. The normal
+    * The t-distribution is using the *sample* standarad error, S. The normal
       distribution instead uses &sigma;, the standard deviation.
     * Using a standard normal for small values of *n* can result in
       confidence intervals that are too narrow. This is because with
       few degrees of freedom the t-distribution has "thicker tails".
-    * As n approaches &inf; the t-distribution approaches a normal
+    * As n approaches &infin; the t-distribution approaches a normal
       distribution.
     * CI = X-bar &plusmn; t(n-1) * S / sqrt(N)
       * t(n-1) = t quantile for n-1
+      * Scott comments: Important to know when this approximation is reasonable
+        * Most appropriate when you're working with normally distributed data, but will also do a reasonable job in a fairly wide range of other situations.
+        * The assumption is **not** robust when your data are not IID. Independence and identical distribution of your sample data are critical!
+          * Example: If your data have two separated population, you will still calculate a confidence interval and a mean, but that CI may actually cover *none* of your data if it is falling between two highly-separated subpopulations.
 * Notes taken directly from [lecture summary][L06.08]:
   * The t-interval technically assumes that the data are iid normal,
     though it is robust to this assumption
